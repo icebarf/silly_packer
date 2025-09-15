@@ -47,16 +47,14 @@ int main(int argc, char* argv[]) {
   // lines up with the sorted images vector so that the nth element
   // of images vector has information in the nth element of
   // atlas_image_placements::rectangles vector
-  atlas_image_placements atlas_packed_rectangles = pack(images);
+  atlas_properties atlas_p = pack(images);
 
   std::cout << "Atlas Size\n";
-  std::cout << atlas_packed_rectangles.width << "x"
-            << atlas_packed_rectangles.height << '\n';
+  std::cout << atlas_p.width << "x" << atlas_p.height << '\n';
   for (int i = 0; i < images.size(); i++) {
     std::cout << std::format("[{}, {}] - '[{}, {}]'\n", images[i].x,
-                             images[i].y,
-                             atlas_packed_rectangles.rectangles[i].x,
-                             atlas_packed_rectangles.rectangles[i].y);
+                             images[i].y, atlas_p.rectangles[i].x,
+                             atlas_p.rectangles[i].y);
   }
 
   cleanup();

@@ -174,7 +174,7 @@ uint32_t closest_power_of_two(uint32_t n) {
   return n;
 }
 
-atlas_image_placements pack(std::vector<image>& images) {
+atlas_properties pack(std::vector<image>& images) {
   // this sorts the images (rectangles) vector by whatever side is larger
   std::sort(images.begin(), images.end(),
             [](const image& img1, const image& img2) {

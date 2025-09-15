@@ -13,12 +13,12 @@ struct image {
   unsigned char* data;
 };
 
-struct atlas_image_placements {
+struct atlas_properties {
   std::uint32_t width;
   std::uint32_t height;
   std::vector<rectangle> rectangles;
 };
 
-atlas_image_placements pack(std::vector<image>& images);
+atlas_properties pack(std::vector<image>& images);
 
 #endif
