@@ -3,6 +3,9 @@
 #include <iostream>
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include <vector>
+
+inline std::vector<image> images;
 
 void load_image(const char* name) {
   image img;
@@ -30,6 +33,30 @@ int main(int argc, char* argv[]) {
 
   for (int i = 1; i < argc; i++) {
     load_image(argv[i]);
+  }
+
+  images.push_back({64, 64});
+  images.push_back({64, 32});
+  images.push_back({32, 64});
+  images.push_back({40, 40});
+  images.push_back({5, 10});
+
+  // this sorts our images vector in accordance with
+  // algorithm policy and returns the atlas placement structure
+  // which contains the atlas information, including a vector that
+  // lines up with the sorted images vector so that the nth element
+  // of images vector has information in the nth element of
+  // atlas_image_placements::rectangles vector
+  atlas_image_placements atlas_packed_rectangles = pack(images);
+
+  std::cout << "Atlas Size\n";
+  std::cout << atlas_packed_rectangles.width << "x"
+            << atlas_packed_rectangles.height << '\n';
+  for (int i = 0; i < images.size(); i++) {
+    std::cout << std::format("[{}, {}] - '[{}, {}]'\n", images[i].x,
+                             images[i].y,
+                             atlas_packed_rectangles.rectangles[i].x,
+                             atlas_packed_rectangles.rectangles[i].y);
   }
 
   cleanup();
