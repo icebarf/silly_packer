@@ -1,12 +1,15 @@
-/* Copyright (c) silly_survivors authors
+/* Copyright (c) silly_survivors authors, 2025
  * This file is an implementation of Guillotine strategy for
  * Rectangle Packing which is one of the ways 2D Bin Packing problem
  * can be solved. The code in this document is inspired from the
  * following sources:
+ * (White-paper that discusses various strategies)
  * https://raw.githubusercontent.com/rougier/freetype-gl/master/doc/RectangleBinPack.pdf
+ * (Blog that uses the technique)
  * https://andrw.coffee/devlog/sprite_packer/
+ * (existing implementation)
  * https://github.com/juj/RectangleBinPack/blob/master/GuillotineBinPack.cpp
- * and some youtube lectures...
+ * and some youtube videos on the topic as well as stackoverflow threads
  */
 
 #include "packer.h"
