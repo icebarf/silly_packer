@@ -13,16 +13,15 @@
  */
 
 #include "packer.h"
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <vector>
 
 using std::uint32_t;
-struct rectangle {
-  uint32_t x, y, width, height;
-};
+using rectangle_vector = std::vector<rectangle>;
 
 constexpr int invalid = -1;
-using rectangle_vector = std::vector<rectangle>;
 
 bool containable(const rectangle& small, const rectangle& big) {
   return (small.x >= big.x && small.y >= big.y &&
@@ -159,4 +158,59 @@ rectangle_vector guillotine_pack_rectangles(uint32_t atlas_width,
 
   } // for all rectangles
   return placed;
+}
+
+/* Thanks to:
+ * https://graphics.stanford.edu/%7Eseander/bithacks.html#RoundUpPowerOf2
+ */
+uint32_t closest_power_of_two(uint32_t n) {
+  n--;
+  n |= n >> 1;
+  n |= n >> 2;
+  n |= n >> 4;
+  n |= n >> 8;
+  n |= n >> 16;
+  n++;
+  return n;
+}
+
+atlas_image_placements pack(std::vector<image>& images) {
+  // this sorts the images (rectangles) vector by whatever side is larger
+  std::sort(images.begin(), images.end(),
+            [](const image& img1, const image& img2) {
+              return std::max(img1.x, img1.y) > std::max(img2.x, img2.y);
+            });
+
+  uint64_t total_area = 0;
+  for (image& img : images) {
+    total_area += img.x * img.y;
+  }
+
+  uint32_t minimum_side = std::ceil(std::sqrt(total_area));
+  uint32_t max_rect_width = images[0].x, max_rect_height = images[0].y;
+  for (int i = 1; i < images.size(); i++) {
+    if (max_rect_width <= images[i].x)
+      max_rect_width = images[i].x;
+    if (max_rect_height <= images[i].y)
+      max_rect_height = images[i].y;
+  }
+  minimum_side =
+      std::max(minimum_side, std::max(max_rect_width, max_rect_height));
+
+  uint32_t atlas_width = closest_power_of_two(minimum_side),
+           atlas_height = closest_power_of_two(minimum_side);
+
+  // we will return hopefully
+  while (true) {
+    std::vector<rectangle> placed_rectangles =
+        guillotine_pack_rectangles(atlas_width, atlas_height, images);
+    if (placed_rectangles.size() == images.size())
+      return {atlas_width, atlas_height, placed_rectangles};
+
+    // grow the atlas if we can't fit
+    if (atlas_width <= atlas_height)
+      atlas_width *= 2;
+    else
+      atlas_height *= 2;
+  }
 }
