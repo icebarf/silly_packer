@@ -1,0 +1,27 @@
+cmake_minimum_required(VERSION 3.11)
+project(stb C)
+
+option(STB_IMPLEMENT_IMAGE "")
+option(STB_IMPLEMENT_IMAGE_WRITE "")
+option(STB_IMPLEMENT_IMAGE_RESIZE2 "")
+option(STB_IMPLEMENT_RECT_PACK "")
+
+add_library(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/implementations.c)
+
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/stb)
+
+if (STB_IMPLEMENT_IMAGE)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE STB_IMAGE_IMPLEMENTATION)
+endif()
+
+if (STB_IMPLEMENT_IMAGE_WRITE)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE STB_IMAGE_WRITE_IMPLEMENTATION)
+endif()
+
+if (STB_IMPLEMENT_IMAGE_RESIZE2)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE STB_IMAGE_RESIZE_IMPLEMENTATION)
+endif()
+
+if (STB_IMPLEMENT_RECT_PACK)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE STB_RECT_PACK_IMPLEMENTATION)
+endif()
