@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.11)
 project(stb C)
 
-option(STB_IMPLEMENT_IMAGE "")
-option(STB_IMPLEMENT_IMAGE_WRITE "")
-option(STB_IMPLEMENT_IMAGE_RESIZE2 "")
-option(STB_IMPLEMENT_RECT_PACK "")
+option(STB_IMPLEMENT_IMAGE CACHE "")
+option(STB_IMPLEMENT_IMAGE_WRITE CACHE "")
+option(STB_IMPLEMENT_IMAGE_RESIZE2 CACHE "")
+option(STB_IMPLEMENT_RECT_PACK CACHE "")
 
 add_library(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/implementations.c)
 
