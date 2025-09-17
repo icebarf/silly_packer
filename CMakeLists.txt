@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.11)
 project(silly_packer CXX)
 
-set(STB_IMPLEMENT_IMAGE ON)
+set(STB_IMPLEMENT_IMAGE ON CACHE BOOL "")
+# set(STB_IMPLEMENT_IMAGE ON)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cmake/stb)
 
 file(GLOB_RECURSE PROJECT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
