@@ -9,7 +9,7 @@ inline std::vector<image> images;
 
 void load_image(const char* name) {
   image img;
-  img.data = stbi_load(name, &img.x, &img.y, &img.n, 0);
+  img.data = stbi_load(name, &img.width, &img.height, &img.n, 0);
   if (img.data == nullptr) {
     std::cerr << std::format("{0}(): failed to load image: {1}: {2}\n",
                              __func__, name, stbi_failure_reason());
@@ -40,6 +40,10 @@ int main(int argc, char* argv[]) {
   images.push_back({32, 64});
   images.push_back({40, 40});
   images.push_back({5, 10});
+  int p1 = 32, p2 = 64;
+  for (int i = 0; i < 1000; i++) {
+    images.push_back({p2, p1});
+  }
 
   // this sorts our images vector in accordance with
   // algorithm policy and returns the atlas placement structure
@@ -52,8 +56,8 @@ int main(int argc, char* argv[]) {
   std::cout << "Atlas Size\n";
   std::cout << atlas_p.width << "x" << atlas_p.height << '\n';
   for (int i = 0; i < images.size(); i++) {
-    std::cout << std::format("[{}, {}] - '[{}, {}]'\n", images[i].x,
-                             images[i].y, atlas_p.rectangles[i].x,
+    std::cout << std::format("[{}, {}] - '[{}, {}]'\n", images[i].width,
+                             images[i].height, atlas_p.rectangles[i].x,
                              atlas_p.rectangles[i].y);
   }
 

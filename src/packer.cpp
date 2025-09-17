@@ -128,7 +128,7 @@ rectangle_vector guillotine_pack_rectangles(uint32_t atlas_width,
       rectangle cur = free_recs[i];
       // NOTE: to_fit.x or image.x,y actually represent width, height
       // and not co-ordinates
-      if (to_fit.x < cur.width && to_fit.y < cur.height) {
+      if (to_fit.width < cur.width && to_fit.height < cur.height) {
         selection = cur;
         selection_index = i;
         break;
@@ -143,11 +143,11 @@ rectangle_vector guillotine_pack_rectangles(uint32_t atlas_width,
                     free_recs.begin() + selection_index + 1);
 
     // GUILLOTINE!!! OFF WITH THEIR HEADS!!!
-    rectangle right = {selection.x + to_fit.x, selection.y,
-                       selection.width - to_fit.x,
-                       static_cast<uint32_t>(to_fit.y)};
-    rectangle bottom = {selection.x, selection.y + to_fit.y, selection.width,
-                        selection.height - to_fit.y};
+    rectangle right = {selection.x + to_fit.width, selection.y,
+                       selection.width - to_fit.width,
+                       static_cast<uint32_t>(to_fit.height)};
+    rectangle bottom = {selection.x, selection.y + to_fit.height,
+                        selection.width, selection.height - to_fit.height};
 
     if (right.width > 0 && right.height > 0)
       free_recs.push_back(right);
@@ -178,21 +178,22 @@ atlas_properties pack(std::vector<image>& images) {
   // this sorts the images (rectangles) vector by whatever side is larger
   std::sort(images.begin(), images.end(),
             [](const image& img1, const image& img2) {
-              return std::max(img1.x, img1.y) > std::max(img2.x, img2.y);
+              return std::max(img1.width, img1.height) >
+                     std::max(img2.width, img2.height);
             });
 
   uint64_t total_area = 0;
   for (image& img : images) {
-    total_area += img.x * img.y;
+    total_area += img.width * img.height;
   }
 
   uint32_t minimum_side = std::ceil(std::sqrt(total_area));
-  uint32_t max_rect_width = images[0].x, max_rect_height = images[0].y;
+  uint32_t max_rect_width = images[0].width, max_rect_height = images[0].height;
   for (int i = 1; i < images.size(); i++) {
-    if (max_rect_width <= images[i].x)
-      max_rect_width = images[i].x;
-    if (max_rect_height <= images[i].y)
-      max_rect_height = images[i].y;
+    if (max_rect_width <= images[i].width)
+      max_rect_width = images[i].width;
+    if (max_rect_height <= images[i].height)
+      max_rect_height = images[i].height;
   }
   minimum_side =
       std::max(minimum_side, std::max(max_rect_width, max_rect_height));
