@@ -13,6 +13,7 @@
  */
 
 #include "packer.h"
+#include "rectangle_checks.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -23,21 +24,10 @@ using rectangle_vector = std::vector<rectangle>;
 
 constexpr int invalid = -1;
 
-bool containable(const rectangle& small, const rectangle& big) {
-  return (small.x >= big.x && small.y >= big.y &&
-          (small.x + small.width <= big.x + big.width) &&
-          (small.y + small.height <= big.y + big.height));
-}
-
-bool is_overlapping(const rectangle& one, const rectangle& two) {
-  return !((one.x >= two.x + two.width) || (one.x + one.width <= two.x) ||
-           (one.y >= two.y + two.height) || (one.y + one.height <= two.y));
-}
-
-rectangle_vector remove_overlapping(rectangle_vector free,
-                                    const rectangle& rect) {
+rectangle_vector handle_overlaps_and_splits(const rectangle_vector& free,
+                                            const rectangle& rect) {
   rectangle_vector new_free = {};
-  for (rectangle& free_rect : free) {
+  for (const rectangle& free_rect : free) {
     // we're not overlapping
     if (!is_overlapping(free_rect, rect)) {
       new_free.push_back(free_rect);
@@ -46,11 +36,11 @@ rectangle_vector remove_overlapping(rectangle_vector free,
 
     /* we are overlapping, and therefore we find the overlap region
      * then make four sub rectangles based on that */
-    uint32_t overlap_x1 = std::max(free_rect.x, rect.x);
-    uint32_t overlap_y1 = std::max(free_rect.y, rect.y);
-    uint32_t overlap_x2 =
+    int overlap_x1 = std::max(free_rect.x, rect.x);
+    int overlap_y1 = std::max(free_rect.y, rect.y);
+    int overlap_x2 =
         std::min(free_rect.x + free_rect.width, rect.x + rect.width);
-    uint32_t overlap_y2 =
+    int overlap_y2 =
         std::min(free_rect.y + free_rect.height, rect.y + rect.height);
 
     /* this also checks if there is an overlap
@@ -107,15 +97,14 @@ rectangle_vector cleanup_splits(rectangle_vector free) {
   // overlap cleanup
   rectangle_vector result;
   for (rectangle& rect : new_free) {
-    result = remove_overlapping(result, rect);
+    result = handle_overlaps_and_splits(result, rect);
     result.push_back(rect);
   }
 
   return result;
 }
 
-rectangle_vector guillotine_pack_rectangles(uint32_t atlas_width,
-                                            uint32_t atlas_height,
+rectangle_vector guillotine_pack_rectangles(int atlas_width, int atlas_height,
                                             std::vector<image> rectangles) {
   rectangle_vector free_recs = {{0, 0, atlas_width, atlas_height}};
   rectangle_vector placed;
@@ -128,7 +117,7 @@ rectangle_vector guillotine_pack_rectangles(uint32_t atlas_width,
       rectangle cur = free_recs[i];
       // NOTE: to_fit.x or image.x,y actually represent width, height
       // and not co-ordinates
-      if (to_fit.width < cur.width && to_fit.height < cur.height) {
+      if (to_fit.width <= cur.width && to_fit.height <= cur.height) {
         selection = cur;
         selection_index = i;
         break;
@@ -138,14 +127,13 @@ rectangle_vector guillotine_pack_rectangles(uint32_t atlas_width,
     if (selection_index == invalid)
       continue;
 
-    placed.push_back(selection);
+    placed.push_back({selection.x, selection.y, to_fit.width, to_fit.height});
     free_recs.erase(free_recs.begin() + selection_index,
                     free_recs.begin() + selection_index + 1);
 
     // GUILLOTINE!!! OFF WITH THEIR HEADS!!!
     rectangle right = {selection.x + to_fit.width, selection.y,
-                       selection.width - to_fit.width,
-                       static_cast<uint32_t>(to_fit.height)};
+                       selection.width - to_fit.width, selection.height};
     rectangle bottom = {selection.x, selection.y + to_fit.height,
                         selection.width, selection.height - to_fit.height};
 

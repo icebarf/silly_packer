@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
   images.push_back({40, 40});
   images.push_back({5, 10});
   int p1 = 32, p2 = 64;
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 10; i++) {
     images.push_back({p2, p1});
   }
 

@@ -5,7 +5,7 @@
 #include <vector>
 
 struct rectangle {
-  uint32_t x, y, width, height;
+  int x, y, width, height;
 };
 
 struct image {
