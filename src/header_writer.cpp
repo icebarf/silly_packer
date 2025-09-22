@@ -66,9 +66,13 @@ void header_writer::write_byte_array(const std::string& name,
 }
 
 void header_writer::close() {
-  if (_has_namespace) {
-    write("}");
+  // prevent double destruction
+  if (!_is_closed) {
+    if (_has_namespace) {
+      write("}");
+    }
+    write("\n#endif");
+    _fstream.close();
+    _is_closed = true;
   }
-  write("\n#endif");
-  _fstream.close();
 }

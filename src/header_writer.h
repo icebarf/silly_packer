@@ -28,6 +28,7 @@ private:
   bool _using_stdint;
   bool _has_namespace;
   std::string _byte_type;
+  bool _is_closed = false;
 };
 
 #endif
