@@ -6,10 +6,10 @@ set(STB_IMPLEMENT_IMAGE ON CACHE BOOL "")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cmake/stb)
 
 FetchContent_Declare(
-        argparse
-        GIT_REPOSITORY https://github.com/morrisfranken/argparse.git
-        GIT_SHALLOW 1
-    )
+    argparse
+    GIT_REPOSITORY https://github.com/morrisfranken/argparse.git
+    GIT_SHALLOW 1
+)
 FetchContent_MakeAvailable(argparse)
 
 file(GLOB_RECURSE PROJECT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
