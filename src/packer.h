@@ -9,7 +9,7 @@ struct rectangle {
 };
 
 struct image {
-  int width, height, n;
+  int width, height, components_per_pixel;
   unsigned char* data;
 };
 
