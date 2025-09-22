@@ -9,6 +9,7 @@ class header_writer {
 public:
   header_writer(const std::filesystem::path& path, const std::string& guard,
                 bool use_stdint = true, const std::string& spacename = "");
+  ~header_writer();
 
   bool is_open() const;
   bool using_stdint() const;

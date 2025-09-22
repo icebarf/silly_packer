@@ -27,6 +27,8 @@ header_writer::header_writer(const std::filesystem::path& path,
   }
 }
 
+header_writer::~header_writer() { header_writer::close(); }
+
 bool header_writer::is_open() const { return _fstream.is_open(); }
 
 bool header_writer::using_stdint() const { return _using_stdint; }
