@@ -96,34 +96,35 @@ convert_packed_to_atlas(const atlas_properties& properties) {
 }
 
 struct packer_args : public argparse::Args {
+  std::vector<std::string>& image_files =
+      kwarg("i,images", "A comma separated list of image files to be packed")
+          .multi_argument();
+  std::vector<std::string>& extra_files =
+      kwarg("e,extras",
+            "A comma separated list of extra files that can be embedded")
+          .set_default("");
+  std::string& output_header =
+      kwarg("o,out", "File name of the generated header")
+          .set_default("silly_atlas.h");
+  std::string& spacename =
+      kwarg("n,namespace",
+            "Namespace string under which the symbols will be placed")
+          .set_default("silly_packer");
   std::string& algorithm =
       kwarg(
           "a,algorithm",
           "Use one of these algorithms to pack: maxrects, skyline, guillotine")
           .set_default("guillotine");
-  std::vector<std::string>& extra_files =
-      kwarg("e,extras",
-            "A comma separated list of extra files that can be embedded")
-          .set_default("");
   bool& gpu_optimize =
-      kwarg("g,gpu_optimize", "Extend input images to be squares with 2^n "
-                              "dimensions (applies to generated atlas as well)")
+      kwarg("g,gpu_optimize",
+            "Extend input images to be squares with 2^n "
+            "dimensions (Generated atlas dimensions are always 2^n)")
           .set_default(false);
-  std::vector<std::string>& image_files =
-      kwarg("i,images", "A comma separated list of image files to be packed")
-          .multi_argument();
-  std::string& spacename =
-      kwarg("n,namespace",
-            "Namespace string under which the symbols will be placed")
-          .set_default("silly_packer");
-  std::string& output_header =
-      kwarg("o,out", "File name of the generated header")
-          .set_default("silly_atlas.h");
-  bool& raylib_utils =
-      kwarg("r,raylib", "Enable raylib utility functions").set_default(false);
   bool& use_stdlib =
       kwarg("s,stdlib", "Use the stdlib defined fixed N-bit types")
           .set_default(true);
+  bool& raylib_utils =
+      kwarg("r,raylib", "Enable raylib utility functions").set_default(false);
 };
 
 using namespace std::string_literals;
