@@ -8,11 +8,11 @@
 #include <stb_image_write.h>
 #include <vector>
 
-inline std::vector<image> images;
-inline image atlas;
+inline std::vector<image<int>> images;
+inline image<unsigned int> atlas;
 
 void load_image(const char* name) {
-  image img;
+  image<int> img;
   img.data =
       stbi_load(name, &img.width, &img.height, &img.components_per_pixel, 0);
   if (img.data == nullptr) {
@@ -25,7 +25,7 @@ void load_image(const char* name) {
 }
 
 void cleanup_stb_images() {
-  for (image& img : images)
+  for (image<int>& img : images)
     stbi_image_free(img.data);
 }
 
@@ -95,6 +95,12 @@ convert_packed_to_atlas(const atlas_properties& properties) {
   return atlas_raw_vector;
 }
 
+void generate_atlas_header(header_writer& header) {
+  header.write_byte_array("atlas", atlas.data,
+                          atlas.height * atlas.width *
+                              atlas.components_per_pixel);
+}
+
 struct packer_args : public argparse::Args {
   std::vector<std::string>& image_files =
       kwarg("i,images", "A comma separated list of image files to be packed")
@@ -148,9 +154,10 @@ void operate_on_args(packer_args& args) {
 
   std::vector<std::uint8_t> atlas_data = convert_packed_to_atlas(packed_data);
 
-  atlas = {.width = static_cast<int>(packed_data.width),
-           .height = static_cast<int>(packed_data.height),
-           .components_per_pixel = images[0].components_per_pixel,
+  atlas = {.width = packed_data.width,
+           .height = packed_data.height,
+           .components_per_pixel =
+               static_cast<unsigned int>(images[0].components_per_pixel),
            .data = atlas_data.data()};
 }
 
@@ -167,8 +174,6 @@ int main(int argc, char* argv[]) {
   header_writer header(args.output_header, "SILLY_PACKER_GENERATED_ATLAS_H",
                        args.use_stdlib, args.spacename);
 
-  header.write_byte_array("atlas", atlas.data,
-                          atlas.height * atlas.width *
-                              atlas.components_per_pixel);
+  generate_atlas_header(header);
   cleanup_stb_images();
 }

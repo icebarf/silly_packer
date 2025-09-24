@@ -1,6 +1,7 @@
 #ifndef SILLY_SURVIVORS_PACKER_H
 #define SILLY_SURVIVORS_PACKER_H
 
+#include <concepts>
 #include <cstdint>
 #include <vector>
 
@@ -8,8 +9,8 @@ struct rectangle {
   int x, y, width, height;
 };
 
-struct image {
-  int width, height, components_per_pixel;
+template <std::integral IntType> struct image {
+  IntType width, height, components_per_pixel;
   unsigned char* data;
 };
 
@@ -19,6 +20,6 @@ struct atlas_properties {
   std::vector<rectangle> rectangles;
 };
 
-atlas_properties pack(std::vector<image>& images);
+atlas_properties pack(std::vector<image<int>>& images);
 
 #endif

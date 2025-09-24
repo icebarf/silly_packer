@@ -104,12 +104,13 @@ rectangle_vector cleanup_splits(rectangle_vector free) {
   return result;
 }
 
-rectangle_vector guillotine_pack_rectangles(int atlas_width, int atlas_height,
-                                            std::vector<image> rectangles) {
+rectangle_vector
+guillotine_pack_rectangles(int atlas_width, int atlas_height,
+                           std::vector<image<int>> rectangles) {
   rectangle_vector free_recs = {{0, 0, atlas_width, atlas_height}};
   rectangle_vector placed;
 
-  for (image& to_fit : rectangles) {
+  for (image<int>& to_fit : rectangles) {
     rectangle selection = {};
     int selection_index = invalid;
 
@@ -162,16 +163,16 @@ uint32_t closest_power_of_two(uint32_t n) {
   return n;
 }
 
-atlas_properties pack(std::vector<image>& images) {
+atlas_properties pack(std::vector<image<int>>& images) {
   // this sorts the images (rectangles) vector by whatever side is larger
   std::sort(images.begin(), images.end(),
-            [](const image& img1, const image& img2) {
+            [](const image<int>& img1, const image<int>& img2) {
               return std::max(img1.width, img1.height) >
                      std::max(img2.width, img2.height);
             });
 
   uint64_t total_area = 0;
-  for (image& img : images) {
+  for (image<int>& img : images) {
     total_area += img.width * img.height;
   }
 

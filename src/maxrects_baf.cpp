@@ -28,7 +28,9 @@ struct baf_score {
 /* we can guarantee these casts because we'll establish a
  * predicate that this code always takes in positive ints
  * and no funky negative width, height images will be there */
-rectangle img2rect(image image) { return {image.width, image.height, 0, 0}; }
+rectangle img2rect(image<int> image) {
+  return {image.width, image.height, 0, 0};
+}
 
 bool can_fit(const rectangle& small, const rectangle& big) {
   return small.width <= big.width && small.height <= big.height;
@@ -133,12 +135,13 @@ rectangle find_selection(const rectangle& to_fit,
   return calculate_best_area_fit(to_fit, selections);
 }
 
-rectangle_vector maxrect_baf_pack_rectangles(int atlas_width, int atlas_height,
-                                             std::vector<image> rectangles) {
+rectangle_vector
+maxrect_baf_pack_rectangles(int atlas_width, int atlas_height,
+                            std::vector<image<int>> rectangles) {
   rectangle_vector free_recs = {{0, 0, atlas_width, atlas_height}};
   rectangle_vector placed;
 
-  for (image& to_fit : rectangles) {
+  for (image<int>& to_fit : rectangles) {
 
     rectangle selection = find_selection(img2rect(to_fit), free_recs);
     if (is_invalid_rectangle(selection))
@@ -148,10 +151,10 @@ rectangle_vector maxrect_baf_pack_rectangles(int atlas_width, int atlas_height,
   } // for to_fit input rectangles
 }
 
-atlas_properties pack_lol(std::vector<image>& images) {
+atlas_properties pack_lol(std::vector<image<int>>& images) {
   /* we sort by area, in our guillotine impl it's max side up */
   std::sort(images.begin(), images.end(),
-            [](const image& img1, const image& img2) {
+            [](const image<int>& img1, const image<int>& img2) {
               return (img1.width * img1.height) > (img2.width * img2.height);
             });
 
