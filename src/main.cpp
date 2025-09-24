@@ -1,5 +1,6 @@
 #include "header_writer.h"
 #include "packer.h"
+#include <algorithm>
 #include <argparse/argparse.hpp>
 #include <cstring>
 #include <format>
@@ -9,6 +10,7 @@
 #include <vector>
 
 inline std::vector<image<int>> images;
+inline std::vector<std::string> images_filenames;
 inline image<unsigned int> atlas;
 
 void load_image(const char* name) {
@@ -21,6 +23,22 @@ void load_image(const char* name) {
     std::cerr << "skipping over this file...\n";
     return;
   }
+  /* push back the upper-case filename string
+   * we will go off the assumption that our filenames wont have any weird
+   * characters that might not be allowed as part of variable identifier
+   * since this is an internal tool, i think we should be fine with this
+   * implied requirement, if not, we might have some hell break loose in the
+   * generated header where we use the file-name as an identifier
+   * perhaps we could run a chain of sanitization steps and a backup
+   * identifier string during header generation as a safe option but i'll
+   * have to discuss this with K, for now ig we roll?
+   */
+  images_filenames.push_back([&name]() {
+    std::string stem = std::filesystem::path(name).stem();
+    std::transform(stem.begin(), stem.end(), stem.begin(),
+                   [](unsigned char c) { return std::toupper(c); });
+    return stem;
+  }());
   images.push_back(img);
 }
 
@@ -95,10 +113,50 @@ convert_packed_to_atlas(const atlas_properties& properties) {
   return atlas_raw_vector;
 }
 
-void generate_atlas_header(header_writer& header) {
-  header.write_byte_array("atlas", atlas.data,
-                          atlas.height * atlas.width *
-                              atlas.components_per_pixel);
+void generate_atlas_header(header_writer& header,
+                           const atlas_properties& packed_data) {
+  const std::string atlas_structure_string{
+      std::format("constexpr struct atlas_info{{unsigned int width,height,"
+                  "components_per_pixel;}}"
+                  "atlas_info={{.width={},.height={},"
+                  ".components_per_pixel={}}};",
+                  atlas.width, atlas.height, atlas.components_per_pixel)};
+  const std::string sprite_structure_string{
+      "struct sprite_info{unsigned int x,y,width,height;};"};
+  const std::string silly_packer_uv_structure_string{
+      "struct silly_uv_coords{float u0, v0, u1, v1;};"};
+  /* unsure whether we need to (x,y)+0.5 or not to get something called
+   * the 'texel', need input from K ig? also probably see the repeated
+   * file-name situation and how to handle that since I will be generating
+   * an enum from those names to access into sprite_info[N]
+   */
+  const std::string sprite_coord_normalize_function_string{
+      "constexpr inline silly_uv_coords normalize_coordinates(const "
+      "sprite_info sprite) { return "
+      "{sprite.x/float(atlas_info.width), sprite.y/float(atlas_info.height),"
+      "(sprite.x+sprite.width)/float(atlas_info.width),"
+      "(sprite.y+sprite.height)/float(atlas_info.height)};}"};
+
+  const std::string sprite_structure_array_string{std::format(
+      "inline constexpr sprite_info sprites[{}]={{", images_filenames.size())};
+  std::string sprites_filled_string{""};
+  for (const rectangle& rect : packed_data.rectangles) {
+    sprites_filled_string.append(std::format("sprite_info{{{},{},{},{}}},",
+                                             rect.x, rect.y, rect.width,
+                                             rect.height));
+  }
+  sprites_filled_string.push_back('}');
+  sprites_filled_string.push_back(';');
+
+  header.write(atlas_structure_string);
+  header.write(sprite_structure_string);
+  header.write(silly_packer_uv_structure_string);
+  header.write(sprite_coord_normalize_function_string);
+  header.write(sprite_structure_array_string);
+  header.write(sprites_filled_string);
+  header.write_byte_array(
+      "atlas", atlas.data,
+      atlas.height * atlas.width * atlas.components_per_pixel, true);
 }
 
 struct packer_args : public argparse::Args {
@@ -134,7 +192,7 @@ struct packer_args : public argparse::Args {
 };
 
 using namespace std::string_literals;
-void operate_on_args(packer_args& args) {
+atlas_properties operate_on_args(packer_args& args) {
   if (args.algorithm != "guillotine"s) {
     std::cerr << std::format(
         "algorithm: '{}' is not supported yet\nDefaulting to 'guillotine'\n",
@@ -159,6 +217,8 @@ void operate_on_args(packer_args& args) {
            .components_per_pixel =
                static_cast<unsigned int>(images[0].components_per_pixel),
            .data = atlas_data.data()};
+
+  return packed_data;
 }
 
 int main(int argc, char* argv[]) {
@@ -169,11 +229,11 @@ int main(int argc, char* argv[]) {
   }
   packer_args args = argparse::parse<packer_args>(argc, argv);
 
-  operate_on_args(args);
+  atlas_properties packed_data = operate_on_args(args);
 
   header_writer header(args.output_header, "SILLY_PACKER_GENERATED_ATLAS_H",
                        args.use_stdlib, args.spacename);
 
-  generate_atlas_header(header);
+  generate_atlas_header(header, packed_data);
   cleanup_stb_images();
 }
