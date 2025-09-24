@@ -16,8 +16,6 @@ header_writer::header_writer(const std::filesystem::path& path,
     write("#include <cstdint>\n");
     _byte_type = "std::uint8_t";
   } else {
-    write("static_assert(sizeof(unsigned char) == 1, \"unsigned char must be 1 "
-          "byte in size\");");
     _byte_type = "unsigned char";
   }
 
