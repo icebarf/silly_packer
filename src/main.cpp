@@ -10,11 +10,10 @@
 #include <vector>
 
 inline std::vector<image<int>> images;
-inline std::vector<std::string> images_filenames;
 inline image<unsigned int> atlas;
 
 void load_image(const char* name) {
-  image<int> img;
+  image<int> img{};
   img.data =
       stbi_load(name, &img.width, &img.height, &img.components_per_pixel, 0);
   if (img.data == nullptr) {
@@ -33,7 +32,7 @@ void load_image(const char* name) {
    * identifier string during header generation as a safe option but i'll
    * have to discuss this with K, for now ig we roll?
    */
-  images_filenames.push_back([&name]() {
+  img.filename.append([&name]() {
     std::string stem = std::filesystem::path(name).stem();
     std::transform(stem.begin(), stem.end(), stem.begin(),
                    [](unsigned char c) { return std::toupper(c); });
@@ -123,37 +122,73 @@ void generate_atlas_header(header_writer& header,
                   atlas.width, atlas.height, atlas.components_per_pixel)};
   const std::string sprite_structure_string{
       "struct sprite_info{unsigned int x,y,width,height;};"};
-  const std::string silly_packer_uv_structure_string{
-      "struct silly_uv_coords{float u0, v0, u1, v1;};"};
+  const std::string uv_structure_string{
+      "struct uv_coords{float u0, v0, u1, v1;};"};
   /* unsure whether we need to (x,y)+0.5 or not to get something called
    * the 'texel', need input from K ig? also probably see the repeated
    * file-name situation and how to handle that since I will be generating
    * an enum from those names to access into sprite_info[N]
    */
   const std::string sprite_coord_normalize_function_string{
-      "constexpr inline silly_uv_coords normalize_coordinates(const "
+      "inline constexpr uv_coords normalized(const "
       "sprite_info sprite) { return "
       "{sprite.x/float(atlas_info.width), sprite.y/float(atlas_info.height),"
       "(sprite.x+sprite.width)/float(atlas_info.width),"
       "(sprite.y+sprite.height)/float(atlas_info.height)};}"};
 
   const std::string sprite_structure_array_string{std::format(
-      "inline constexpr sprite_info sprites[{}]={{", images_filenames.size())};
-  std::string sprites_filled_string{""};
+      "inline constexpr sprite_info sprites[{}]={{", images.size())};
+  std::string sprite_filled_string{""};
   for (const rectangle& rect : packed_data.rectangles) {
-    sprites_filled_string.append(std::format("sprite_info{{{},{},{},{}}},",
-                                             rect.x, rect.y, rect.width,
-                                             rect.height));
+    sprite_filled_string.append(std::format("sprite_info{{{},{},{},{}}},",
+                                            rect.x, rect.y, rect.width,
+                                            rect.height));
   }
-  sprites_filled_string.push_back('}');
-  sprites_filled_string.push_back(';');
+  sprite_filled_string.append("};");
 
+  std::string sprite_enum_string{"enum sprite_indices {"};
+  for (int i = 0; i < images.size(); i++) {
+    sprite_enum_string.append(std::format("{},", images[i].filename));
+  }
+  sprite_enum_string.append("};");
+
+  std::string comma_separated_filename_literal_string{};
+  for (const image<int>& img : images) {
+    comma_separated_filename_literal_string.append(
+        std::format("\"{}\",", img.filename));
+  }
+
+  // Format: first: filename string literal count
+  //         second: filenames string literals command separated
+  // clang-format off
+ std::string index_by_str_function_string{std::format(
+      "constexpr int get_index(const char* string) {{"
+        "const auto& silly_strlen = [](const char* str) constexpr {{"
+          "unsigned int count = 0;"
+          "while (*str != '\\0') ++count, ++str;"
+          "return count;"
+          "}};"
+        "const char* (filenames[{0}]) = {{{1}}};"
+        "for (unsigned int i = 0; i < {0}; i++){{"
+          "if(silly_strlen(string) != silly_strlen(filenames[i])) continue;"
+          "const char* tmp = filenames[i];"
+          "while(*string != '\\0' && *string == *tmp) ++string, ++tmp;"
+          "if(static_cast<unsigned char>(*string) - static_cast<unsigned char>(*tmp) == 0) return i;"
+        "}}"
+        "return -1;"
+      "}}", images.size(), comma_separated_filename_literal_string)};
+  // clang-format on
+
+  // K's string-id thing
+  header.write(index_by_str_function_string);
+  // main header
   header.write(atlas_structure_string);
   header.write(sprite_structure_string);
-  header.write(silly_packer_uv_structure_string);
+  header.write(uv_structure_string);
+  header.write(sprite_enum_string);
   header.write(sprite_coord_normalize_function_string);
   header.write(sprite_structure_array_string);
-  header.write(sprites_filled_string);
+  header.write(sprite_filled_string);
   header.write_byte_array(
       "atlas", atlas.data,
       atlas.height * atlas.width * atlas.components_per_pixel, true);

@@ -3,6 +3,7 @@
 
 #include <concepts>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 struct rectangle {
@@ -12,6 +13,7 @@ struct rectangle {
 template <std::integral IntType> struct image {
   IntType width, height, components_per_pixel;
   unsigned char* data;
+  std::string filename;
 };
 
 struct atlas_properties {
