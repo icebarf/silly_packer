@@ -308,6 +308,7 @@ void generate_atlas_header(header_writer& header, const packer_args& args,
   if (args.extra_files.size() > 0) {
     generate_extra_files_arrays(header, args.extra_files);
   }
+  std::cout << "Output Header: " << args.output_header << '\n';
 }
 
 using namespace std::string_literals;
@@ -329,12 +330,12 @@ atlas_properties operate_on_args(packer_args& args) {
            .data = atlas_data.data()};
 
   if (args.generate_png) {
-    stbi_write_png(
-        std::format("{}.png",
-                    std::filesystem::path(args.output_header).stem().c_str())
-            .c_str(),
-        atlas.width, atlas.height, atlas.components_per_pixel,
-        atlas_data.data(), atlas.width * atlas.components_per_pixel);
+    std::string filename = std::format(
+        "{}.png", std::filesystem::path(args.output_header).stem().c_str());
+    stbi_write_png(filename.c_str(), atlas.width, atlas.height,
+                   atlas.components_per_pixel, atlas_data.data(),
+                   atlas.width * atlas.components_per_pixel);
+    std::cout << "Output png: " << filename << '\n';
   }
 
   return packed_data;
