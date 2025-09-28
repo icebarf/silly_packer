@@ -4,10 +4,43 @@
 #include <argparse/argparse.hpp>
 #include <cstring>
 #include <format>
+#include <fstream>
 #include <iostream>
 #include <stb_image.h>
 #include <stb_image_write.h>
 #include <vector>
+
+struct packer_args : public argparse::Args {
+  std::vector<std::string>& image_files =
+      kwarg("i,images", "A comma separated list of image files to be packed")
+          .multi_argument();
+  std::vector<std::string>& extra_files =
+      kwarg("e,extras",
+            "A comma separated list of extra files that can be embedded")
+          .set_default("");
+  std::string& output_header =
+      kwarg("o,out", "File name of the generated header")
+          .set_default("silly_atlas.h");
+  std::string& spacename =
+      kwarg("n,namespace",
+            "Namespace string under which the symbols will be placed")
+          .set_default("silly_packer");
+  std::string& algorithm =
+      kwarg(
+          "a,algorithm",
+          "Use one of these algorithms to pack: maxrects, skyline, guillotine")
+          .set_default("guillotine");
+  bool& gpu_optimize =
+      kwarg("g,gpu_optimize",
+            "Extend input images to be squares with 2^n "
+            "dimensions (Generated atlas dimensions are always 2^n)")
+          .set_default(false);
+  bool& use_stdlib =
+      kwarg("s,stdlib", "Use the stdlib defined fixed N-bit types")
+          .set_default(true);
+  bool& raylib_utils =
+      kwarg("r,raylib", "Enable raylib utility functions").set_default(false);
+};
 
 inline std::vector<image<int>> images;
 inline image<unsigned int> atlas;
@@ -225,7 +258,33 @@ void generate_variables(header_writer& header,
   header.write(sprite_filled_string);
 }
 
-void generate_atlas_header(header_writer& header,
+void generate_extra_files_arrays(header_writer& header,
+                                 std::vector<std::string>& extras) {
+  std::vector<std::uint8_t> data;
+  for (std::string& filename : extras) {
+    std::ifstream input(filename);
+    if (!input.is_open()) {
+      std::cerr << std::format("{}: failed to open: reason: {}\n", filename,
+                               std::strerror(errno));
+    }
+    input.seekg(0, std::ios::end);
+    std::size_t size = input.tellg();
+    input.seekg(0, std::ios::beg);
+    input.clear();
+
+    data.resize(size);
+    input.read(reinterpret_cast<char*>(data.data()), size);
+
+    // assume a identifier compatible name stem
+    header.write_byte_array(std::filesystem::path(filename).stem(), data.data(),
+                            data.size());
+
+    input.close();
+    data.clear();
+  }
+}
+
+void generate_atlas_header(header_writer& header, const packer_args& args,
                            const atlas_properties& packed_data) {
   generate_structures(header);
   generate_utility_functions(header);
@@ -238,39 +297,11 @@ void generate_atlas_header(header_writer& header,
 
   if (header.using_raylib())
     generate_raylib_function_defs(header);
-}
 
-struct packer_args : public argparse::Args {
-  std::vector<std::string>& image_files =
-      kwarg("i,images", "A comma separated list of image files to be packed")
-          .multi_argument();
-  std::vector<std::string>& extra_files =
-      kwarg("e,extras",
-            "A comma separated list of extra files that can be embedded")
-          .set_default("");
-  std::string& output_header =
-      kwarg("o,out", "File name of the generated header")
-          .set_default("silly_atlas.h");
-  std::string& spacename =
-      kwarg("n,namespace",
-            "Namespace string under which the symbols will be placed")
-          .set_default("silly_packer");
-  std::string& algorithm =
-      kwarg(
-          "a,algorithm",
-          "Use one of these algorithms to pack: maxrects, skyline, guillotine")
-          .set_default("guillotine");
-  bool& gpu_optimize =
-      kwarg("g,gpu_optimize",
-            "Extend input images to be squares with 2^n "
-            "dimensions (Generated atlas dimensions are always 2^n)")
-          .set_default(false);
-  bool& use_stdlib =
-      kwarg("s,stdlib", "Use the stdlib defined fixed N-bit types")
-          .set_default(true);
-  bool& raylib_utils =
-      kwarg("r,raylib", "Enable raylib utility functions").set_default(false);
-};
+  if (args.extra_files.size() > 0) {
+    generate_extra_files_arrays(header, args.extra_files);
+  }
+}
 
 using namespace std::string_literals;
 atlas_properties operate_on_args(packer_args& args) {
@@ -278,10 +309,6 @@ atlas_properties operate_on_args(packer_args& args) {
     std::cerr << std::format(
         "algorithm: '{}' is not supported yet\nDefaulting to 'guillotine'\n",
         args.algorithm);
-  }
-
-  if (args.extra_files.size() > 0) {
-    std::cerr << "Extra files embedding not supported yet\nSkipping...\n";
   }
 
   atlas_properties packed_data = pack_images_to_rectangles(args.image_files);
@@ -310,6 +337,6 @@ int main(int argc, char* argv[]) {
   header_writer header(args.output_header, "SILLY_PACKER_GENERATED_ATLAS_H",
                        args.spacename, args.use_stdlib, args.raylib_utils);
 
-  generate_atlas_header(header, packed_data);
+  generate_atlas_header(header, args, packed_data);
   cleanup_stb_images();
 }
