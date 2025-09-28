@@ -1,4 +1,5 @@
 #include "packer.h"
+#include "rectangle_checks.h"
 #include <algorithm>
 #include <cstdint>
 
@@ -95,12 +96,13 @@ uint32_t select_best(std::vector<baf_score>& scores,
     return scores[0].index;
 
   uint32_t index = break_short_tie(tie);
-  if (index == invalid)
-    return std::min_element(selections.begin(), selections.end(),
-                            [](const rectangle& r1, const rectangle& r2) {
-                              return r1.height < r2.height;
-                            })
-        ->height;
+  if (index == invalid) {
+    auto it = std::min_element(selections.begin(), selections.end(),
+                               [](const rectangle& r1, const rectangle& r2) {
+                                 return r1.height < r2.height;
+                               });
+    return static_cast<int>(std::distance(selections.begin(), it));
+  }
 
   return index;
 }
@@ -108,9 +110,9 @@ uint32_t select_best(std::vector<baf_score>& scores,
 rectangle calculate_best_area_fit(const rectangle& to_fit,
                                   const rectangle_vector& selections) {
   std::vector<baf_score> scores;
-  scores.reserve(selections.size());
+  scores.resize(selections.size());
   for (int i = 0; i < selections.size(); i++) {
-    scores[i].index = 0;
+    scores[i].index = i;
     scores[i].area_fit = area(selections[i]) - area(to_fit);
     scores[i].short_side_fit = std::min(selections[i].width - to_fit.width,
                                         selections[i].height - to_fit.height);
@@ -135,6 +137,59 @@ rectangle find_selection(const rectangle& to_fit,
   return calculate_best_area_fit(to_fit, selections);
 }
 
+static void handle_overlaps_and_splits(rectangle_vector& free_recs,
+                                       const rectangle placed) {
+  rectangle_vector new_free;
+
+  auto push_if_valid = [&](rectangle r) {
+    if (r.width > 0 && r.height > 0)
+      new_free.push_back(r);
+  };
+
+  for (const rectangle& free : free_recs) {
+    if (!is_overlapping(free, placed)) {
+      new_free.push_back(free);
+      continue;
+    }
+
+    if (placed.x > free.x) {
+      push_if_valid({free.x, free.y, placed.x - free.x, free.height});
+    }
+    if ((placed.x + placed.width) < (free.x + free.width)) {
+      push_if_valid({placed.x + placed.width, free.y,
+                     (free.x + free.width) - (placed.x + placed.width),
+                     free.height});
+    }
+    if (placed.y > free.y) {
+      push_if_valid({free.x, free.y, free.width, placed.y - free.y});
+    }
+    if ((placed.y + placed.height) < (free.y + free.height)) {
+      push_if_valid({free.x, placed.y + placed.height, free.width,
+                     (free.y + free.height) - (placed.y + placed.height)});
+    }
+  } // for free in free recs
+  free_recs.swap(new_free);
+}
+
+void prune_free_overlapping(rectangle_vector& free_rects) {
+  std::vector<bool> to_prune(free_rects.size(), false);
+  for (int i = 0; i < free_rects.size(); i++) {
+    for (int j = 0; j < free_rects.size(); j++) {
+      if (i != j && containable(free_rects[i], free_rects[j]))
+        to_prune[i] = true;
+    }
+  }
+
+  rectangle_vector cleaned;
+  for (int i = 0; i < free_rects.size(); i++) {
+    if (to_prune[i])
+      continue;
+    cleaned.push_back(free_rects[i]);
+  }
+
+  free_rects.swap(cleaned);
+}
+
 rectangle_vector
 maxrect_baf_pack_rectangles(int atlas_width, int atlas_height,
                             std::vector<image<int>> rectangles) {
@@ -146,12 +201,18 @@ maxrect_baf_pack_rectangles(int atlas_width, int atlas_height,
     rectangle selection = find_selection(img2rect(to_fit), free_recs);
     if (is_invalid_rectangle(selection))
       return rectangle_vector{make_invalid_rectangle()};
-    placed.push_back(selection);
+    placed.push_back({selection.x, selection.y, to_fit.width, to_fit.height});
 
+    handle_overlaps_and_splits(
+        free_recs,
+        rectangle{selection.x, selection.y, to_fit.width, to_fit.height});
+    prune_free_overlapping(free_recs);
   } // for to_fit input rectangles
+
+  return placed;
 }
 
-atlas_properties pack_lol(std::vector<image<int>>& images) {
+atlas_properties maxcrects(std::vector<image<int>>& images) {
   /* we sort by area, in our guillotine impl it's max side up */
   std::sort(images.begin(), images.end(),
             [](const image<int>& img1, const image<int>& img2) {
@@ -166,10 +227,14 @@ atlas_properties pack_lol(std::vector<image<int>>& images) {
   while (true) {
     rectangle_vector placed_rectangles =
         maxrect_baf_pack_rectangles(atlas_width, atlas_height, images);
-    if (is_invalid_rectangle(*placed_rectangles.begin()))
-      atlas_width *= 2;
-    else
-      atlas_height *= 2;
+    if (is_invalid_rectangle(*placed_rectangles.begin())) {
+      if (atlas_width <= atlas_height)
+        atlas_width *= 2;
+      else
+        atlas_height *= 2;
+
+      continue;
+    }
 
     return {atlas_width, atlas_height, placed_rectangles};
   }
