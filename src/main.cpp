@@ -26,10 +26,9 @@ struct packer_args : public argparse::Args {
             "Namespace string under which the symbols will be placed")
           .set_default("silly_packer");
   std::string& algorithm =
-      kwarg(
-          "a,algorithm",
-          "Use one of these algorithms to pack: maxrects, skyline, guillotine")
-          .set_default("guillotine");
+      kwarg("a,algorithm",
+            "Use one of these algorithms to pack: maxrects, guillotine")
+          .set_default("maxrects");
   bool& gpu_optimize =
       kwarg("g,gpu_optimize",
             "Extend input images to be squares with 2^n "
@@ -40,10 +39,13 @@ struct packer_args : public argparse::Args {
           .set_default(true);
   bool& raylib_utils =
       kwarg("r,raylib", "Enable raylib utility functions").set_default(false);
+  bool& generate_png =
+      kwarg("p,png", "Generate an output png image").set_default(false);
 };
 
 inline std::vector<image<int>> images;
 inline image<unsigned int> atlas;
+inline std::vector<std::uint8_t> atlas_data;
 
 void load_image(const char* name) {
   image<int> img{};
@@ -80,18 +82,23 @@ void cleanup_stb_images() {
 }
 
 atlas_properties
-pack_images_to_rectangles(std::vector<std::string>& image_files) {
+pack_images_to_rectangles(std::vector<std::string>& image_files,
+                          std::string& algorithm) {
   for (int i = 0; i < image_files.size(); i++) {
     load_image(image_files[i].c_str());
   }
 
-  // this sorts our images vector in accordance with
-  // algorithm policy and returns the atlas placement structure
-  // which contains the atlas information, including a vector that
-  // lines up with the sorted images vector so that the nth element
-  // of images vector has information in the nth element of
-  // atlas_image_placements::rectangles vector
-  atlas_properties atlas_p = pack(images);
+  /* this sorts our images vector in accordance with
+   * algorithm policy and returns the atlas placement structure
+   * which contains the atlas information, including a vector that
+   * lines up with the sorted images vector so that the nth element
+   * of images vector has information in the nth element of
+   * atlas_image_placements::rectangles vector */
+  atlas_properties atlas_p;
+  if (algorithm == "maxrects")
+    atlas_p = maxrects(images);
+  else
+    atlas_p = guillotine(images);
 
   // std::cout << "Atlas Size\n";
   // std::cout << atlas_p.width << "x" << atlas_p.height << '\n';
@@ -305,21 +312,30 @@ void generate_atlas_header(header_writer& header, const packer_args& args,
 
 using namespace std::string_literals;
 atlas_properties operate_on_args(packer_args& args) {
-  if (args.algorithm != "guillotine"s) {
-    std::cerr << std::format(
-        "algorithm: '{}' is not supported yet\nDefaulting to 'guillotine'\n",
-        args.algorithm);
-  }
+  // lower-case the argument just in case
+  std::transform(args.algorithm.begin(), args.algorithm.end(),
+                 args.algorithm.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
 
-  atlas_properties packed_data = pack_images_to_rectangles(args.image_files);
+  atlas_properties packed_data =
+      pack_images_to_rectangles(args.image_files, args.algorithm);
 
-  std::vector<std::uint8_t> atlas_data = convert_packed_to_atlas(packed_data);
+  atlas_data = convert_packed_to_atlas(packed_data);
 
   atlas = {.width = packed_data.width,
            .height = packed_data.height,
            .components_per_pixel =
                static_cast<unsigned int>(images[0].components_per_pixel),
            .data = atlas_data.data()};
+
+  if (args.generate_png) {
+    stbi_write_png(
+        std::format("{}.png",
+                    std::filesystem::path(args.output_header).stem().c_str())
+            .c_str(),
+        atlas.width, atlas.height, atlas.components_per_pixel,
+        atlas_data.data(), atlas.width * atlas.components_per_pixel);
+  }
 
   return packed_data;
 }

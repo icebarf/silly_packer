@@ -6,19 +6,6 @@
 using rectangle_vector = std::vector<rectangle>;
 using std::uint32_t;
 
-constexpr int invalid = -1;
-
-rectangle make_invalid_rectangle() {
-  return {invalid, invalid, invalid, invalid};
-}
-
-bool is_invalid_rectangle(rectangle r) {
-  if (r.height == invalid && r.width == invalid && r.x == invalid &&
-      r.y == invalid)
-    return true;
-  return false;
-}
-
 struct baf_score {
   int index = invalid;
   uint32_t area_fit = 0;
@@ -29,17 +16,13 @@ struct baf_score {
 /* we can guarantee these casts because we'll establish a
  * predicate that this code always takes in positive ints
  * and no funky negative width, height images will be there */
-rectangle img2rect(image<int> image) {
-  return {image.width, image.height, 0, 0};
+static rectangle img2rect(image<int> image) {
+  return {0, 0, image.width, image.height};
 }
 
-bool can_fit(const rectangle& small, const rectangle& big) {
-  return small.width <= big.width && small.height <= big.height;
-}
+static uint32_t area(const rectangle& rect) { return rect.width * rect.height; }
 
-uint32_t area(const rectangle& rect) { return rect.width * rect.height; }
-
-int break_long_tie(std::vector<baf_score>& ties) {
+static int break_long_tie(std::vector<baf_score>& ties) {
   // sort by long side and break it if possible
   std::sort(ties.begin(), ties.end(),
             [](const baf_score& s1, const baf_score& s2) {
@@ -58,7 +41,7 @@ int break_long_tie(std::vector<baf_score>& ties) {
   return invalid;
 }
 
-int break_short_tie(std::vector<baf_score>& ties) {
+static int break_short_tie(std::vector<baf_score>& ties) {
   // sort by short side and break it if possible
   std::sort(ties.begin(), ties.end(),
             [](const baf_score& s1, const baf_score& s2) {
@@ -77,8 +60,8 @@ int break_short_tie(std::vector<baf_score>& ties) {
   return break_long_tie(short_tie);
 }
 
-uint32_t select_best(std::vector<baf_score>& scores,
-                     const rectangle_vector& selections) {
+static uint32_t select_best(std::vector<baf_score>& scores,
+                            const rectangle_vector& selections) {
   // sort by area
   std::sort(scores.begin(), scores.end(),
             [](const baf_score& s1, const baf_score& s2) {
@@ -107,8 +90,8 @@ uint32_t select_best(std::vector<baf_score>& scores,
   return index;
 }
 
-rectangle calculate_best_area_fit(const rectangle& to_fit,
-                                  const rectangle_vector& selections) {
+static rectangle calculate_best_area_fit(const rectangle& to_fit,
+                                         const rectangle_vector& selections) {
   std::vector<baf_score> scores;
   scores.resize(selections.size());
   for (int i = 0; i < selections.size(); i++) {
@@ -122,11 +105,11 @@ rectangle calculate_best_area_fit(const rectangle& to_fit,
   return selections[select_best(scores, selections)];
 }
 
-rectangle find_selection(const rectangle& to_fit,
-                         const rectangle_vector& free) {
+static rectangle find_selection(const rectangle& to_fit,
+                                const rectangle_vector& free) {
   rectangle_vector selections;
   for (int i = 0; i < free.size(); i++) {
-    if (can_fit(to_fit, free[i])) {
+    if (canfit(to_fit, free[i])) {
       selections.push_back(free[i]);
     } // if can fit
   } // for free_recs
@@ -171,7 +154,7 @@ static void handle_overlaps_and_splits(rectangle_vector& free_recs,
   free_recs.swap(new_free);
 }
 
-void prune_free_overlapping(rectangle_vector& free_rects) {
+static void prune_free_overlapping(rectangle_vector& free_rects) {
   std::vector<bool> to_prune(free_rects.size(), false);
   for (int i = 0; i < free_rects.size(); i++) {
     for (int j = 0; j < free_rects.size(); j++) {
@@ -190,7 +173,7 @@ void prune_free_overlapping(rectangle_vector& free_rects) {
   free_rects.swap(cleaned);
 }
 
-rectangle_vector
+static rectangle_vector
 maxrect_baf_pack_rectangles(int atlas_width, int atlas_height,
                             std::vector<image<int>> rectangles) {
   rectangle_vector free_recs = {{0, 0, atlas_width, atlas_height}};
@@ -212,7 +195,7 @@ maxrect_baf_pack_rectangles(int atlas_width, int atlas_height,
   return placed;
 }
 
-atlas_properties maxcrects(std::vector<image<int>>& images) {
+atlas_properties maxrects(std::vector<image<int>>& images) {
   /* we sort by area, in our guillotine impl it's max side up */
   std::sort(images.begin(), images.end(),
             [](const image<int>& img1, const image<int>& img2) {
