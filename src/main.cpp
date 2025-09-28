@@ -254,11 +254,6 @@ atlas_properties operate_on_args(packer_args& args) {
     std::cerr << "Extra files embedding not supported yet\nSkipping...\n";
   }
 
-  if (args.raylib_utils == true) {
-    std::cerr << "Raylib utils generation in header is not supported "
-                 "yet\nSkippping...\n";
-  }
-
   atlas_properties packed_data = pack_images_to_rectangles(args.image_files);
 
   std::vector<std::uint8_t> atlas_data = convert_packed_to_atlas(packed_data);
@@ -283,7 +278,7 @@ int main(int argc, char* argv[]) {
   atlas_properties packed_data = operate_on_args(args);
 
   header_writer header(args.output_header, "SILLY_PACKER_GENERATED_ATLAS_H",
-                       args.use_stdlib, args.spacename);
+                       args.spacename, args.use_stdlib, args.raylib_utils);
 
   generate_atlas_header(header, packed_data);
   cleanup_stb_images();

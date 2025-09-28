@@ -4,14 +4,14 @@
 #include <stdexcept>
 
 header_writer::header_writer(const std::filesystem::path& path,
-                             const std::string& guard, bool use_stdint,
-                             const std::string& spacename)
-    : _fstream(path), _using_stdint(use_stdint) {
+                             const std::string& guard,
+                             const std::string& spacename, bool use_stdint,
+                             bool use_raylib)
+    : _fstream(path), _using_stdint(use_stdint), _using_raylib(use_raylib) {
   if (!_fstream.is_open()) {
     throw std::runtime_error("Could not open file");
   }
 
-  write("#include <raylib.h>\n");
   write(std::format("#ifndef {0}\n#define {0}\n", guard));
   if (_using_stdint) {
     write("#include <cstdint>\n");
@@ -19,6 +19,8 @@ header_writer::header_writer(const std::filesystem::path& path,
   } else {
     _byte_type = "unsigned char";
   }
+  if (_using_raylib)
+    write("#include <raylib.h>\n");
 
   if (spacename != "") {
     write(std::format("namespace {} {{", spacename));
