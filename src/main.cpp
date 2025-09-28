@@ -129,28 +129,47 @@ void generate_structures(header_writer& header) {
   header.write(uv_structure_string);
 }
 
+void generate_raylib_function_defs(header_writer& header) {
+  // clang-format off
+  const std::string raylib_atlas_image_function_string {
+    "Image raylib_atlas_image() {"
+      "return Image{atlas,atlas_info.width,atlas_info.height,"
+      "1,PIXELFORMAT_UNCOMPRESSED_R8G8B8A8};"
+    "}"
+  };
+
+  const std::string raylib_atlas_texture_function_string {
+    "Texture2D raylib_atlas_texture() {"
+      "return LoadTextureFromImage(raylib_atlas_image());"
+    "}"
+  };
+  // clang-format on
+
+  header.write(raylib_atlas_image_function_string);
+  header.write(raylib_atlas_texture_function_string);
+}
+
 void generate_utility_functions(header_writer& header) {
+
   /* unsure whether we need to (x,y)+0.5 or not to get something called
    * the 'texel', need input from K ig? also probably see the repeated
    * file-name situation and how to handle that since I will be generating
-   * an enum from those names to access into sprite_info[N]
-   */
+   * an enum from those names to access into sprite_info[N] */
   // clang-format off
   const std::string sprite_coord_normalize_function_string{
       "inline constexpr uv_coords normalized(const sprite_info sprite){"
       "return{sprite.x/float(atlas_info.width), sprite.y/float(atlas_info.height),"
       "(sprite.x+sprite.width)/float(atlas_info.width),"
       "(sprite.y+sprite.height)/float(atlas_info.height)}; }"};
-  // clang-format on
 
   std::string comma_separated_filename_literal_string{};
   for (const image<int>& img : images) {
     comma_separated_filename_literal_string.append(
         std::format("\"{}\",", img.filename));
   }
-  // Format: first: filename string literal count
-  //         second: filenames string literals command separated
-  // clang-format off
+
+  /* Format: first: filename string literal count
+   *         second: filenames string literals command separated */
   const std::string index_by_str_function_string{std::format(
       "constexpr int get_index(const char* string) {{"
         "const auto& silly_strlen = [](const char* str) constexpr {{"
@@ -167,7 +186,15 @@ void generate_utility_functions(header_writer& header) {
         "}}"
         "return -1;"
       "}}", images.size(), comma_separated_filename_literal_string)};
+
   // clang-format on
+
+  /* we only write declarations at the top because one of them depends on
+   * `atlas` array and it's better to group them together for organization */
+  if (header.using_raylib()) {
+    header.write("Image raylib_atlas_image();");
+    header.write("Texture2D raylib_atlas_texture();");
+  }
 
   header.write(index_by_str_function_string);
   header.write(sprite_coord_normalize_function_string);
@@ -208,6 +235,9 @@ void generate_atlas_header(header_writer& header,
   header.write_byte_array(
       "atlas", atlas.data,
       atlas.height * atlas.width * atlas.components_per_pixel, true);
+
+  if (header.using_raylib())
+    generate_raylib_function_defs(header);
 }
 
 struct packer_args : public argparse::Args {
