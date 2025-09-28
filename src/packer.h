@@ -22,6 +22,7 @@ struct atlas_properties {
   std::vector<rectangle> rectangles;
 };
 
-atlas_properties pack(std::vector<image<int>>& images);
+atlas_properties maxrects(std::vector<image<int>>& images);
+atlas_properties guillotine(std::vector<image<int>>& images);
 
 #endif
