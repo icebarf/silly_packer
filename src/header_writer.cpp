@@ -32,6 +32,8 @@ header_writer::~header_writer() { header_writer::close(); }
 
 bool header_writer::is_open() const { return _fstream.is_open(); }
 
+bool header_writer::using_raylib() const { return _using_raylib; }
+
 bool header_writer::using_stdint() const { return _using_stdint; }
 
 const std::string& header_writer::byte_type() const { return _byte_type; }

@@ -14,6 +14,7 @@ public:
 
   bool is_open() const;
   bool using_stdint() const;
+  bool using_raylib() const;
   const std::string& byte_type() const;
 
   void write(const std::string& data);
