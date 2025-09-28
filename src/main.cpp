@@ -112,8 +112,7 @@ convert_packed_to_atlas(const atlas_properties& properties) {
   return atlas_raw_vector;
 }
 
-void generate_atlas_header(header_writer& header,
-                           const atlas_properties& packed_data) {
+void generate_structures(header_writer& header) {
   const std::string atlas_structure_string{
       std::format("constexpr struct atlas_info{{unsigned int width,height,"
                   "components_per_pixel;}}"
@@ -124,44 +123,35 @@ void generate_atlas_header(header_writer& header,
       "struct sprite_info{unsigned int x,y,width,height;};"};
   const std::string uv_structure_string{
       "struct uv_coords{float u0, v0, u1, v1;};"};
+
+  header.write(atlas_structure_string);
+  header.write(sprite_structure_string);
+  header.write(uv_structure_string);
+}
+
+void generate_utility_functions(header_writer& header) {
   /* unsure whether we need to (x,y)+0.5 or not to get something called
    * the 'texel', need input from K ig? also probably see the repeated
    * file-name situation and how to handle that since I will be generating
    * an enum from those names to access into sprite_info[N]
    */
+  // clang-format off
   const std::string sprite_coord_normalize_function_string{
-      "inline constexpr uv_coords normalized(const "
-      "sprite_info sprite) { return "
-      "{sprite.x/float(atlas_info.width), sprite.y/float(atlas_info.height),"
+      "inline constexpr uv_coords normalized(const sprite_info sprite){"
+      "return{sprite.x/float(atlas_info.width), sprite.y/float(atlas_info.height),"
       "(sprite.x+sprite.width)/float(atlas_info.width),"
-      "(sprite.y+sprite.height)/float(atlas_info.height)};}"};
-
-  const std::string sprite_structure_array_string{std::format(
-      "inline constexpr sprite_info sprites[{}]={{", images.size())};
-  std::string sprite_filled_string{""};
-  for (const rectangle& rect : packed_data.rectangles) {
-    sprite_filled_string.append(std::format("sprite_info{{{},{},{},{}}},",
-                                            rect.x, rect.y, rect.width,
-                                            rect.height));
-  }
-  sprite_filled_string.append("};");
-
-  std::string sprite_enum_string{"enum sprite_indices {"};
-  for (int i = 0; i < images.size(); i++) {
-    sprite_enum_string.append(std::format("{},", images[i].filename));
-  }
-  sprite_enum_string.append("};");
+      "(sprite.y+sprite.height)/float(atlas_info.height)}; }"};
+  // clang-format on
 
   std::string comma_separated_filename_literal_string{};
   for (const image<int>& img : images) {
     comma_separated_filename_literal_string.append(
         std::format("\"{}\",", img.filename));
   }
-
   // Format: first: filename string literal count
   //         second: filenames string literals command separated
   // clang-format off
- std::string index_by_str_function_string{std::format(
+  const std::string index_by_str_function_string{std::format(
       "constexpr int get_index(const char* string) {{"
         "const auto& silly_strlen = [](const char* str) constexpr {{"
           "unsigned int count = 0;"
@@ -179,16 +169,42 @@ void generate_atlas_header(header_writer& header,
       "}}", images.size(), comma_separated_filename_literal_string)};
   // clang-format on
 
-  // K's string-id thing
   header.write(index_by_str_function_string);
-  // main header
-  header.write(atlas_structure_string);
-  header.write(sprite_structure_string);
-  header.write(uv_structure_string);
-  header.write(sprite_enum_string);
   header.write(sprite_coord_normalize_function_string);
+}
+
+void generate_variables(header_writer& header,
+                        const atlas_properties& packed_data) {
+  const std::string sprite_structure_array_string{std::format(
+      "inline constexpr sprite_info sprites[{}]={{", images.size())};
+  std::string sprite_filled_string{""};
+  for (const rectangle& rect : packed_data.rectangles) {
+    sprite_filled_string.append(std::format("sprite_info{{{},{},{},{}}},",
+                                            rect.x, rect.y, rect.width,
+                                            rect.height));
+  }
+  sprite_filled_string.append("};");
+
+  std::string sprite_enum_string{"enum sprite_indices {"};
+  for (int i = 0; i < images.size(); i++) {
+    sprite_enum_string.append(std::format("{},", images[i].filename));
+  }
+  sprite_enum_string.append("};");
+
+  const std::string raylib_atlas_image{std::format("")};
+
+  header.write(sprite_enum_string);
   header.write(sprite_structure_array_string);
   header.write(sprite_filled_string);
+}
+
+void generate_atlas_header(header_writer& header,
+                           const atlas_properties& packed_data) {
+  generate_structures(header);
+  generate_utility_functions(header);
+  generate_variables(header, packed_data);
+
+  // main atlas array
   header.write_byte_array(
       "atlas", atlas.data,
       atlas.height * atlas.width * atlas.components_per_pixel, true);

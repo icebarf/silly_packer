@@ -11,6 +11,7 @@ header_writer::header_writer(const std::filesystem::path& path,
     throw std::runtime_error("Could not open file");
   }
 
+  write("#include <raylib.h>\n");
   write(std::format("#ifndef {0}\n#define {0}\n", guard));
   if (_using_stdint) {
     write("#include <cstdint>\n");
