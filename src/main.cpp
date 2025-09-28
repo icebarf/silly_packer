@@ -97,8 +97,12 @@ pack_images_to_rectangles(std::vector<std::string>& image_files,
   atlas_properties atlas_p;
   if (algorithm == "maxrects")
     atlas_p = maxrects(images);
-  else
+  else if (algorithm == "guillotine")
     atlas_p = guillotine(images);
+  else {
+    std::cerr << std::format("algorithm: '{}' is not valid input\n", algorithm);
+    std::exit(1);
+  }
 
   // std::cout << "Atlas Size\n";
   // std::cout << atlas_p.width << "x" << atlas_p.height << '\n';
