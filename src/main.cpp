@@ -28,7 +28,7 @@ struct packer_args : public argparse::Args {
   std::string& algorithm =
       kwarg("a,algorithm",
             "Use one of these algorithms to pack: maxrects, guillotine")
-          .set_default("maxrects");
+          .set_default("guillotine");
   bool& gpu_optimize =
       kwarg("g,gpu_optimize",
             "Extend input images to be squares with 2^n "
