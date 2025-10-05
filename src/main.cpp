@@ -173,6 +173,20 @@ void generate_structures(header_writer& header) {
   header.write(uv_structure_string);
 }
 
+void generate_sprite_filename_array(header_writer& header) {
+  std::string comma_separated_filename_literal_string{};
+  for (int i = 0; i < images.size(); i++) {
+    comma_separated_filename_literal_string.append(
+        std::format("\"{}\",", images[i].filename));
+  }
+
+  std::string sprite_indiced_filename_string{std::format(
+      "static constexpr const char* (sprite_filenames[{}]) = {{{}}};",
+      images.size(), comma_separated_filename_literal_string)};
+
+  header.write(sprite_indiced_filename_string);
+}
+
 void generate_raylib_function_defs(header_writer& header) {
   // clang-format off
   const std::string raylib_atlas_image_function_string {
@@ -206,12 +220,6 @@ void generate_utility_functions(header_writer& header) {
       "(sprite.x+sprite.width)/float(atlas_info.width),"
       "(sprite.y+sprite.height)/float(atlas_info.height)}; }"};
 
-  std::string comma_separated_filename_literal_string{};
-  for (const image<int>& img : images) {
-    comma_separated_filename_literal_string.append(
-        std::format("\"{}\",", img.filename));
-  }
-
   /* Format: first: filename string literal count
    *         second: filenames string literals command separated */
   const std::string index_by_str_function_string{std::format(
@@ -221,15 +229,14 @@ void generate_utility_functions(header_writer& header) {
           "while (*str != '\\0') ++count, ++str;"
           "return count;"
           "}};"
-        "const char* (filenames[{0}]) = {{{1}}};"
         "for (unsigned int i = 0; i < {0}; i++){{"
-          "if(silly_strlen(string) != silly_strlen(filenames[i])) continue;"
+          "if(silly_strlen(string) != silly_strlen(sprite_filenames[i])) continue;"
           "const char* tmp = filenames[i];"
           "while(*string != '\\0' && *string == *tmp) ++string, ++tmp;"
           "if(static_cast<unsigned char>(*string) - static_cast<unsigned char>(*tmp) == 0) return i;"
         "}}"
         "return -1;"
-      "}}", images.size(), comma_separated_filename_literal_string)};
+      "}}", images.size())};
 
   // clang-format on
 
@@ -258,11 +265,9 @@ void generate_variables(header_writer& header,
 
   std::string sprite_enum_string{"enum sprite_indices {"};
   for (int i = 0; i < images.size(); i++) {
-    sprite_enum_string.append(std::format("{},", images[i].filename));
+    sprite_enum_string.append(std::format("{} = {},", images[i].filename, i));
   }
   sprite_enum_string.append("};");
-
-  const std::string raylib_atlas_image{std::format("")};
 
   header.write(sprite_enum_string);
   header.write(sprite_structure_array_string);
@@ -298,6 +303,7 @@ void generate_extra_files_arrays(header_writer& header,
 void generate_atlas_header(header_writer& header, const packer_args& args,
                            const atlas_properties& packed_data) {
   generate_structures(header);
+  generate_sprite_filename_array(header);
   generate_utility_functions(header);
   generate_variables(header, packed_data);
 
