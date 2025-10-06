@@ -14,6 +14,7 @@ header_writer::header_writer(const std::filesystem::path& path,
   }
 
   write(std::format("#ifndef {0}\n#define {0}\n", guard));
+  write("#include <array>");
   if (_using_stdint) {
     write("#include <cstdint>\n");
     _byte_type = "std::uint8_t";
@@ -67,8 +68,9 @@ void header_writer::write_byte_array(const std::string& name,
   if (constant) {
     constant_string = "constexpr ";
   }
-  write(std::format("{}{} {}[{}]={{{}}};", constant_string, _byte_type, name,
-                    size, bytes_stream.str()));
+  std::string type_string = std::format("std::array<{},{}>", _byte_type, size);
+  write(std::format("{}{} {}={{{}}};", constant_string, type_string, name,
+                    bytes_stream.str()));
 }
 
 void header_writer::close() {

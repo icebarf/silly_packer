@@ -222,9 +222,10 @@ void generate_sprite_filename_array(header_writer& header) {
         std::format("\"{}\",", images[i].filename));
   }
 
-  std::string sprite_indiced_filename_string{std::format(
-      "static constexpr const char* (sprite_filenames[{}]) = {{{}}};",
-      images.size(), comma_separated_filename_literal_string)};
+  std::string sprite_indiced_filename_string{
+      std::format("static constexpr std::array<const char*,{}> "
+                  "sprite_filenames={{{}}};",
+                  images.size(), comma_separated_filename_literal_string)};
 
   header.write(sprite_indiced_filename_string);
 }
@@ -296,7 +297,7 @@ void generate_utility_functions(header_writer& header) {
 void generate_variables(header_writer& header,
                         const atlas_properties& packed_data) {
   const std::string sprite_structure_array_string{std::format(
-      "inline constexpr sprite_info sprites[{}]={{", images.size())};
+      "inline constexpr std::array<sprite_info,{}> sprites={{", images.size())};
   std::string sprite_filled_string{""};
   for (const rectangle& rect : packed_data.rectangles) {
     sprite_filled_string.append(std::format("sprite_info{{{},{},{},{}}},",
@@ -305,7 +306,7 @@ void generate_variables(header_writer& header,
   }
   sprite_filled_string.append("};");
 
-  std::string sprite_enum_string{"enum sprite_indices {"};
+  std::string sprite_enum_string{"enum sprite_indices{"};
   for (int i = 0; i < images.size(); i++) {
     sprite_enum_string.append(
         std::format("{} = {},", images[i].clean_filename, i));
