@@ -199,12 +199,12 @@ convert_packed_to_atlas(const atlas_properties& properties) {
 }
 
 void generate_structures(header_writer& header) {
-  const std::string atlas_structure_string{
-      std::format("constexpr struct atlas_info{{unsigned int width,height,"
-                  "components_per_pixel;}}"
-                  "atlas_info={{.width={},.height={},"
-                  ".components_per_pixel={}}};",
-                  atlas.width, atlas.height, atlas.components_per_pixel)};
+  const std::string atlas_structure_string{std::format(
+      "inline constexpr struct atlas_info{{unsigned int width,height,"
+      "components_per_pixel;}}"
+      "atlas_info={{.width={},.height={},"
+      ".components_per_pixel={}}};",
+      atlas.width, atlas.height, atlas.components_per_pixel)};
   const std::string sprite_structure_string{
       "struct sprite_info{unsigned int x,y,width,height;};"};
   const std::string uv_structure_string{
@@ -287,8 +287,8 @@ void generate_utility_functions(header_writer& header) {
   /* we only write declarations at the top because one of them depends on
    * `atlas` array and it's better to group them together for organization */
   if (header.using_raylib()) {
-    header.write("Image raylib_atlas_image();");
-    header.write("Texture2D raylib_atlas_texture();");
+    header.write("inline Image raylib_atlas_image();");
+    header.write("inline Texture2D raylib_atlas_texture();");
   }
 
   header.write(index_by_str_function_string);
