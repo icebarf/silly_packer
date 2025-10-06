@@ -14,7 +14,7 @@ header_writer::header_writer(const std::filesystem::path& path,
   }
 
   write(std::format("#ifndef {0}\n#define {0}\n", guard));
-  write("#include <array>");
+  write("#include <array>\n");
   if (_using_stdint) {
     write("#include <cstdint>\n");
     _byte_type = "std::uint8_t";
