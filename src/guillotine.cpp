@@ -15,7 +15,6 @@
 #include "packer.h"
 #include "rectangle_checks.h"
 #include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <vector>
 
@@ -147,20 +146,6 @@ guillotine_pack_rectangles(int atlas_width, int atlas_height,
   return placed;
 }
 
-/* Thanks to:
- * https://graphics.stanford.edu/%7Eseander/bithacks.html#RoundUpPowerOf2
- */
-static uint32_t closest_power_of_two(uint32_t n) {
-  n--;
-  n |= n >> 1;
-  n |= n >> 2;
-  n |= n >> 4;
-  n |= n >> 8;
-  n |= n >> 16;
-  n++;
-  return n;
-}
-
 atlas_properties guillotine(std::vector<image<int>>& images) {
   // this sorts the images (rectangles) vector by whatever side is larger
   std::sort(images.begin(), images.end(),
@@ -169,24 +154,8 @@ atlas_properties guillotine(std::vector<image<int>>& images) {
                      std::max(img2.width, img2.height);
             });
 
-  uint64_t total_area = 0;
-  for (image<int>& img : images) {
-    total_area += img.width * img.height;
-  }
-
-  uint32_t minimum_side = std::ceil(std::sqrt(total_area));
-  uint32_t max_rect_width = images[0].width, max_rect_height = images[0].height;
-  for (int i = 1; i < images.size(); i++) {
-    if (max_rect_width <= images[i].width)
-      max_rect_width = images[i].width;
-    if (max_rect_height <= images[i].height)
-      max_rect_height = images[i].height;
-  }
-  minimum_side =
-      std::max(minimum_side, std::max(max_rect_width, max_rect_height));
-
-  uint32_t atlas_width = closest_power_of_two(minimum_side),
-           atlas_height = closest_power_of_two(minimum_side);
+  uint32_t atlas_width = closest_power_of_two(calculate_min_side(images)),
+           atlas_height = closest_power_of_two(calculate_min_side(images));
 
   // we will return hopefully
   while (true) {
