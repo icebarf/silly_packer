@@ -271,7 +271,7 @@ void generate_utility_functions(header_writer& header) {
           "}};"
         "for (unsigned int i = 0; i < {0}; i++){{"
           "if(silly_strlen(string) != silly_strlen(sprite_filenames[i])) continue;"
-          "const char* tmp = filenames[i];"
+          "const char* tmp = sprite_filenames[i];"
           "while(*string != '\\0' && *string == *tmp) ++string, ++tmp;"
           "if(static_cast<unsigned char>(*string) - static_cast<unsigned char>(*tmp) == 0) return i;"
         "}}"
