@@ -3,6 +3,8 @@ include(FetchContent)
 project(silly_packer CXX)
 
 set(STB_IMPLEMENT_IMAGE ON CACHE BOOL "")
+set(STB_IMPLEMENT_IMAGE_WRITE ON CACHE BOOL "")
+set(STB_IMPLEMENT_IMAGE_RESIZE2 ON CACHE BOOL "")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cmake/stb)
 
 FetchContent_Declare(
