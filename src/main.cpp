@@ -54,6 +54,27 @@ inline std::vector<image<int>> images;
 inline image<unsigned int> atlas;
 inline std::vector<std::uint8_t> atlas_data;
 
+void sanitize_image(image<int>& img, const char* name) {
+  img.clean_filename.append([&name]() {
+    std::string stem = std::filesystem::path(name).stem();
+    std::transform(stem.begin(), stem.end(), stem.begin(),
+                   [](unsigned char c) { return std::toupper(c); });
+
+    for (int i = 0; i < stem.size(); i++) {
+      if (i == 0 && std::isdigit(stem[i])) {
+        std::cerr << std::format(
+            "Input File '{}' must not begin with a numerical digit", name);
+        std::exit(1);
+      }
+      if (not std::isalnum(stem[i])) {
+        stem[i] = '_';
+      }
+    }
+
+    return stem;
+  }());
+}
+
 void load_image(const char* name, bool duplicates) {
   // check for repeats and skip
   if (duplicates == false) {
@@ -76,34 +97,8 @@ void load_image(const char* name, bool duplicates) {
     std::cerr << "Exiting\n";
     std::exit(1);
   }
-  /* push back the upper-case filename string
-   * we will go off the assumption that our filenames wont have any weird
-   * characters that might not be allowed as part of variable identifier
-   * since this is an internal tool, i think we should be fine with this
-   * implied requirement, if not, we might have some hell break loose in the
-   * generated header where we use the file-name as an identifier
-   * perhaps we could run a chain of sanitization steps and a backup
-   * identifier string during header generation as a safe option but i'll
-   * have to discuss this with K, for now ig we roll?
-   */
-  img.clean_filename.append([&name]() {
-    std::string stem = std::filesystem::path(name).stem();
-    std::transform(stem.begin(), stem.end(), stem.begin(),
-                   [](unsigned char c) { return std::toupper(c); });
 
-    for (int i = 0; i < stem.size(); i++) {
-      if (i == 0 && std::isdigit(stem[i])) {
-        std::cerr << std::format(
-            "Input File '{}' must not begin with a numerical digit", name);
-        std::exit(1);
-      }
-      if (not std::isalnum(stem[i])) {
-        stem[i] = '_';
-      }
-    }
-
-    return stem;
-  }());
+  sanitize_image(img, name);
   images.push_back(img);
 }
 
@@ -156,13 +151,8 @@ pack_images_to_rectangles(std::vector<std::string>& image_files,
     std::exit(1);
   }
 
-  // std::cout << "Atlas Size\n";
-  // std::cout << atlas_p.width << "x" << atlas_p.height << '\n';
-  // for (int i = 0; i < images.size(); i++) {
-  //   std::cout << std::format("[{}, {}] - '[{}, {}]'\n", images[i].width,
-  //                            images[i].height, atlas_p.rectangles[i].x,
-  //                            atlas_p.rectangles[i].y);
-  // }
+  std::cout << "Atlas Size\n";
+  std::cout << atlas_p.width << "x" << atlas_p.height << '\n';
 
   return atlas_p;
 }
