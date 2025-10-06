@@ -7,7 +7,8 @@ header_writer::header_writer(const std::filesystem::path& path,
                              const std::string& guard,
                              const std::string& spacename, bool use_stdint,
                              bool use_raylib)
-    : _fstream(path), _using_stdint(use_stdint), _using_raylib(use_raylib) {
+    : _fstream(path), _header_path(path), _using_stdint(use_stdint),
+      _using_raylib(use_raylib) {
   if (!_fstream.is_open()) {
     throw std::runtime_error("Could not open file");
   }
@@ -37,6 +38,8 @@ bool header_writer::using_raylib() const { return _using_raylib; }
 bool header_writer::using_stdint() const { return _using_stdint; }
 
 const std::string& header_writer::byte_type() const { return _byte_type; }
+
+std::filesystem::path header_writer::get_path() const { return _header_path; }
 
 void header_writer::write(const std::string& data) {
   _fstream.write(data.c_str(), data.size());

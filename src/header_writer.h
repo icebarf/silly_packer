@@ -16,6 +16,7 @@ public:
   bool using_stdint() const;
   bool using_raylib() const;
   const std::string& byte_type() const;
+  std::filesystem::path get_path() const;
 
   void write(const std::string& data);
   void write_variable(const std::string& type, const std::string& name,
@@ -27,6 +28,7 @@ public:
 
 private:
   std::ofstream _fstream;
+  std::filesystem::path _header_path;
   bool _using_raylib;
   bool _using_stdint;
   bool _has_namespace;
