@@ -353,6 +353,7 @@ void generate_extra_files_arrays(header_writer& header,
         std::cerr << std::format("Extra Input File '{}' must not begin with a "
                                  "numerical digit\nExiting\n",
                                  filename);
+        std::filesystem::remove(header.get_path());
         std::exit(1);
       }
       if (not std::isalnum(stem[i])) {
