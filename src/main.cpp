@@ -1,5 +1,7 @@
 #include "header_writer.h"
 #include "packer.h"
+#include "rectangle_checks.h"
+
 #include <algorithm>
 #include <argparse/argparse.hpp>
 #include <cstring>
@@ -7,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <stb_image.h>
+#include <stb_image_resize2.h>
 #include <stb_image_write.h>
 #include <vector>
 
@@ -81,11 +84,31 @@ void cleanup_stb_images() {
     stbi_image_free(img.data);
 }
 
+void resize(std::vector<image<int>> images) {
+  for (image<int>& img : images) {
+    image<int> new_img;
+    new_img.width = closest_power_of_two(img.width);
+    new_img.height = closest_power_of_two(img.width);
+    new_img.components_per_pixel = img.components_per_pixel;
+    new_img.data = stbir_resize_uint8_srgb(
+        img.data, img.width, img.height, img.width * img.components_per_pixel,
+        nullptr, new_img.width, new_img.height,
+        new_img.width * new_img.components_per_pixel, STBIR_RGBA);
+
+    stbi_image_free(img.data);
+    img = new_img;
+  }
+}
+
 atlas_properties
 pack_images_to_rectangles(std::vector<std::string>& image_files,
-                          std::string& algorithm) {
+                          std::string& algorithm, bool gpu_optimize) {
   for (int i = 0; i < image_files.size(); i++) {
     load_image(image_files[i].c_str());
+  }
+
+  if (gpu_optimize) {
+    resize(images);
   }
 
   /* this sorts our images vector in accordance with
@@ -328,8 +351,8 @@ atlas_properties operate_on_args(packer_args& args) {
                  args.algorithm.begin(),
                  [](unsigned char c) { return std::tolower(c); });
 
-  atlas_properties packed_data =
-      pack_images_to_rectangles(args.image_files, args.algorithm);
+  atlas_properties packed_data = pack_images_to_rectangles(
+      args.image_files, args.algorithm, args.gpu_optimize);
 
   atlas_data = convert_packed_to_atlas(packed_data);
 
