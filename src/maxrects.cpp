@@ -22,44 +22,6 @@ static rectangle img2rect(image<int> image) {
 
 static uint32_t area(const rectangle& rect) { return rect.width * rect.height; }
 
-static int break_long_tie(std::vector<baf_score>& ties) {
-  // sort by long side and break it if possible
-  std::sort(ties.begin(), ties.end(),
-            [](const baf_score& s1, const baf_score& s2) {
-              return s1.long_side_fit < s2.long_side_fit;
-            });
-
-  std::vector<baf_score> long_tie;
-  uint32_t smallest = ties[0].long_side_fit;
-  for (int i = 1; i < ties.size(); i++) {
-    if (ties[i].long_side_fit == smallest)
-      long_tie.push_back(ties[i]);
-  }
-  if (long_tie.size() == 0)
-    return ties[0].index;
-
-  return invalid;
-}
-
-static int break_short_tie(std::vector<baf_score>& ties) {
-  // sort by short side and break it if possible
-  std::sort(ties.begin(), ties.end(),
-            [](const baf_score& s1, const baf_score& s2) {
-              return s1.short_side_fit < s2.short_side_fit;
-            });
-
-  std::vector<baf_score> short_tie;
-  uint32_t smallest = ties[0].short_side_fit;
-  for (int i = 1; i < ties.size(); i++) {
-    if (ties[i].short_side_fit == smallest)
-      short_tie.push_back(ties[i]);
-  }
-  if (short_tie.size() == 0)
-    return ties[0].index;
-
-  return break_long_tie(short_tie);
-}
-
 static uint32_t select_best(std::vector<baf_score>& scores,
                             const rectangle_vector& selections) {
   // sort by area
