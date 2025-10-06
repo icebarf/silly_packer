@@ -44,14 +44,30 @@ struct packer_args : public argparse::Args {
       kwarg("r,raylib", "Enable raylib utility functions").set_default(false);
   bool& generate_png =
       kwarg("p,png", "Generate an output png image").set_default(false);
+  bool& duplicates =
+      kwarg("d,duplicates",
+            "Allow duplicate file inputs to be part of the atlas")
+          .set_default(false);
 };
 
 inline std::vector<image<int>> images;
 inline image<unsigned int> atlas;
 inline std::vector<std::uint8_t> atlas_data;
 
-void load_image(const char* name) {
+void load_image(const char* name, bool duplicates) {
+  // check for repeats and skip
+  if (duplicates == false) {
+    for (const image<int>& img : images) {
+      if (img.fullpath == std::filesystem::path(name)) {
+        std::cerr << std::format("File '{}' alread loaded, skipping over...\n",
+                                 name);
+        return;
+      }
+    }
+  }
+
   image<int> img{};
+  img.fullpath = std::filesystem::path(name);
   img.data =
       stbi_load(name, &img.width, &img.height, &img.components_per_pixel, 0);
   if (img.data == nullptr) {
@@ -102,9 +118,10 @@ void resize(std::vector<image<int>> images) {
 
 atlas_properties
 pack_images_to_rectangles(std::vector<std::string>& image_files,
-                          std::string& algorithm, bool gpu_optimize) {
+                          std::string& algorithm, bool gpu_optimize,
+                          bool duplicates) {
   for (int i = 0; i < image_files.size(); i++) {
-    load_image(image_files[i].c_str());
+    load_image(image_files[i].c_str(), duplicates);
   }
 
   if (gpu_optimize) {
@@ -352,7 +369,7 @@ atlas_properties operate_on_args(packer_args& args) {
                  [](unsigned char c) { return std::tolower(c); });
 
   atlas_properties packed_data = pack_images_to_rectangles(
-      args.image_files, args.algorithm, args.gpu_optimize);
+      args.image_files, args.algorithm, args.gpu_optimize, args.duplicates);
 
   atlas_data = convert_packed_to_atlas(packed_data);
 

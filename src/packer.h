@@ -14,6 +14,7 @@ template <std::integral IntType> struct image {
   IntType width, height, components_per_pixel;
   unsigned char* data;
   std::string filename;
+  std::string fullpath;
 };
 
 struct atlas_properties {
