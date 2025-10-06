@@ -21,7 +21,3 @@ endif()
 if (STB_IMPLEMENT_IMAGE_RESIZE2)
   target_compile_definitions(${PROJECT_NAME} PRIVATE STB_IMAGE_RESIZE_IMPLEMENTATION)
 endif()
-
-if (STB_IMPLEMENT_RECT_PACK)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE STB_RECT_PACK_IMPLEMENTATION)
-endif()
