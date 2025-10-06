@@ -232,15 +232,16 @@ void generate_sprite_filename_array(header_writer& header) {
 
 void generate_raylib_function_defs(header_writer& header) {
   // clang-format off
-  const std::string raylib_atlas_image_function_string {
-    "Image raylib_atlas_image() {"
-      "return Image{atlas,atlas_info.width,atlas_info.height,"
-      "1,PIXELFORMAT_UNCOMPRESSED_R8G8B8A8};"
-    "}"
+  const std::string raylib_atlas_image_function_string {std::format(
+    "inline Image raylib_atlas_image() {{"
+      "return Image{{reinterpret_cast<void*>(const_cast<{}*>(atlas.data())),"
+      "atlas_info.width,atlas_info.height,"
+      "1,PIXELFORMAT_UNCOMPRESSED_R8G8B8A8}};"
+    "}}", header.byte_type())
   };
 
   const std::string raylib_atlas_texture_function_string {
-    "Texture2D raylib_atlas_texture() {"
+    "inline Texture2D raylib_atlas_texture() {"
       "return LoadTextureFromImage(raylib_atlas_image());"
     "}"
   };
