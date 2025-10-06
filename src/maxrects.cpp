@@ -70,29 +70,28 @@ static uint32_t select_best(std::vector<baf_score>& scores,
 
   std::vector<baf_score> tie;
   uint32_t smallest = scores[0].area_fit;
-  for (int i = 1; i < scores.size(); i++) {
-    if (scores[i].area_fit == smallest)
-      tie.push_back(scores[i]);
+  for (const baf_score& s : scores) {
+    if (s.area_fit == smallest)
+      tie.push_back(s);
+    else
+      break;
   }
 
   if (tie.size() == 0)
     return scores[0].index;
 
-  uint32_t index = break_short_tie(tie);
-  if (index == invalid) {
-    auto it = std::min_element(selections.begin(), selections.end(),
-                               [](const rectangle& r1, const rectangle& r2) {
-                                 return r1.height < r2.height;
-                               });
-    return static_cast<int>(std::distance(selections.begin(), it));
-  }
-
-  return index;
+  std::sort(tie.begin(), tie.end(),
+            [](const baf_score& s1, const baf_score& s2) {
+              if (s1.short_side_fit != s2.short_side_fit)
+                return s1.short_side_fit < s2.short_side_fit;
+              return s1.long_side_fit < s2.long_side_fit;
+            });
+  return tie[0].index;
 }
 
 static rectangle calculate_best_area_fit(const rectangle& to_fit,
                                          const rectangle_vector& selections) {
-  std::vector<baf_score> scores;
+  std::vector<baf_score> scores(selections.size());
   scores.resize(selections.size());
   for (int i = 0; i < selections.size(); i++) {
     scores[i].index = i;
@@ -102,7 +101,8 @@ static rectangle calculate_best_area_fit(const rectangle& to_fit,
     scores[i].long_side_fit = std::max(selections[i].width - to_fit.width,
                                        selections[i].height - to_fit.height);
   }
-  return selections[select_best(scores, selections)];
+  uint32_t index = select_best(scores, selections);
+  return selections[index];
 }
 
 static rectangle find_selection(const rectangle& to_fit,
