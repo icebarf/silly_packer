@@ -53,7 +53,8 @@ void header_writer::write_variable(const std::string& type,
   if (constant) {
     constant_string = "constexpr ";
   }
-  write(std::format("{}{} {}={};", constant_string, type, name, value));
+  const std::string type_string = std::format("inline {}", type);
+  write(std::format("{}{} {}={};", constant_string, type_string, name, value));
 }
 
 void header_writer::write_byte_array(const std::string& name,
@@ -68,7 +69,8 @@ void header_writer::write_byte_array(const std::string& name,
   if (constant) {
     constant_string = "constexpr ";
   }
-  std::string type_string = std::format("std::array<{},{}>", _byte_type, size);
+  std::string type_string =
+      std::format("inline std::array<{},{}>", _byte_type, size);
   write(std::format("{}{} {}={{{}}};", constant_string, type_string, name,
                     bytes_stream.str()));
 }

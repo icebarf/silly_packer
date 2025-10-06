@@ -223,7 +223,7 @@ void generate_sprite_filename_array(header_writer& header) {
   }
 
   std::string sprite_indiced_filename_string{
-      std::format("static constexpr std::array<const char*,{}> "
+      std::format("inline constexpr std::array<const char*,{}> "
                   "sprite_filenames={{{}}};",
                   images.size(), comma_separated_filename_literal_string)};
 
@@ -267,7 +267,7 @@ void generate_utility_functions(header_writer& header) {
   /* Format: first: filename string literal count
    *         second: filenames string literals command separated */
   const std::string index_by_str_function_string{std::format(
-      "constexpr int get_index(const char* string) {{"
+      "inline constexpr int get_index(const char* string) {{"
         "const auto& silly_strlen = [](const char* str) constexpr {{"
           "unsigned int count = 0;"
           "while (*str != '\\0') ++count, ++str;"
