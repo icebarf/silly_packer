@@ -46,9 +46,9 @@ inline uint32_t closest_power_of_two(uint32_t n) {
   return n;
 }
 
-inline uint32_t calculate_min_side(std::vector<image<int>>& images) {
+inline uint32_t calculate_min_side(const std::vector<image<int>>& images) {
   uint64_t total_area = 0;
-  for (image<int>& img : images) {
+  for (const image<int>& img : images) {
     total_area += img.width * img.height;
   }
 
