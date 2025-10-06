@@ -164,10 +164,6 @@ atlas_properties maxrects(std::vector<image<int>>& images) {
               return (img1.width * img1.height) > (img2.width * img2.height);
             });
 
-  /* magic defaults this time
-   * we dont use heuristic stuff to decide, and instead
-   * assume from our silly_survivors implementation `128` as
-   * a sane default */
   uint32_t atlas_width = closest_power_of_two(calculate_min_side(images)),
            atlas_height = closest_power_of_two(calculate_min_side(images));
   while (true) {
