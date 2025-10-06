@@ -58,23 +58,23 @@ void load_image(const char* name, bool duplicates) {
   // check for repeats and skip
   if (duplicates == false) {
     for (const image<int>& img : images) {
-      if (img.fullpath == std::filesystem::path(name)) {
-        std::cerr << std::format("File '{}' alread loaded, skipping over...\n",
-                                 name);
-        return;
+      if (img.filename == std::filesystem::path(name).stem()) {
+        std::cerr << std::format("File '{}' alread loaded. Exiting\n", name);
+        std::exit(1);
       }
     }
   }
 
   image<int> img{};
+  img.filename = std::filesystem::path(name).stem();
   img.fullpath = std::filesystem::path(name);
   img.data =
       stbi_load(name, &img.width, &img.height, &img.components_per_pixel, 0);
   if (img.data == nullptr) {
     std::cerr << std::format("{0}(): failed to load image: {1}: {2}\n",
                              __func__, name, stbi_failure_reason());
-    std::cerr << "skipping over this file...\n";
-    return;
+    std::cerr << "Exiting\n";
+    std::exit(1);
   }
   /* push back the upper-case filename string
    * we will go off the assumption that our filenames wont have any weird
@@ -86,10 +86,22 @@ void load_image(const char* name, bool duplicates) {
    * identifier string during header generation as a safe option but i'll
    * have to discuss this with K, for now ig we roll?
    */
-  img.filename.append([&name]() {
+  img.clean_filename.append([&name]() {
     std::string stem = std::filesystem::path(name).stem();
     std::transform(stem.begin(), stem.end(), stem.begin(),
                    [](unsigned char c) { return std::toupper(c); });
+
+    for (int i = 0; i < stem.size(); i++) {
+      if (i == 0 && std::isdigit(stem[i])) {
+        std::cerr << std::format(
+            "Input File '{}' must not begin with a numerical digit", name);
+        std::exit(1);
+      }
+      if (not std::isalnum(stem[i])) {
+        stem[i] = '_';
+      }
+    }
+
     return stem;
   }());
   images.push_back(img);
@@ -305,7 +317,8 @@ void generate_variables(header_writer& header,
 
   std::string sprite_enum_string{"enum sprite_indices {"};
   for (int i = 0; i < images.size(); i++) {
-    sprite_enum_string.append(std::format("{} = {},", images[i].filename, i));
+    sprite_enum_string.append(
+        std::format("{} = {},", images[i].clean_filename, i));
   }
   sprite_enum_string.append("};");
 
@@ -332,8 +345,22 @@ void generate_extra_files_arrays(header_writer& header,
     input.read(reinterpret_cast<char*>(data.data()), size);
 
     // assume a identifier compatible name stem
-    header.write_byte_array(std::filesystem::path(filename).stem(), data.data(),
-                            data.size());
+    std::string stem = std::filesystem::path(filename).stem();
+    std::transform(stem.begin(), stem.end(), stem.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    for (int i = 0; i < stem.size(); i++) {
+      if (i == 0 && std::isdigit(stem[i])) {
+        std::cerr << std::format("Extra Input File '{}' must not begin with a "
+                                 "numerical digit\nExiting\n",
+                                 filename);
+        std::exit(1);
+      }
+      if (not std::isalnum(stem[i])) {
+        stem[i] = '_';
+      }
+    }
+
+    header.write_byte_array(stem, data.data(), data.size());
 
     input.close();
     data.clear();

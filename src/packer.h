@@ -13,6 +13,7 @@ struct rectangle {
 template <std::integral IntType> struct image {
   IntType width, height, components_per_pixel;
   unsigned char* data;
+  std::string clean_filename;
   std::string filename;
   std::string fullpath;
 };
