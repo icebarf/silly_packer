@@ -8,13 +8,12 @@
 class header_writer {
 public:
   header_writer(const std::filesystem::path& path, const std::string& guard,
-                const std::string& spacename = "", bool use_stdint = true,
-                bool use_raylib = false);
+                const std::string& spacename = "", bool use_raylib = false);
   ~header_writer();
 
   bool is_open() const;
-  bool using_stdint() const;
   bool using_raylib() const;
+  bool using_namespace() const;
   const std::string& byte_type() const;
   std::filesystem::path get_path() const;
 
@@ -30,7 +29,6 @@ private:
   std::ofstream _fstream;
   std::filesystem::path _header_path;
   bool _using_raylib;
-  bool _using_stdint;
   bool _has_namespace;
   std::string _byte_type;
   bool _is_closed = false;

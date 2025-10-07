@@ -5,25 +5,37 @@ Silly Packer is a texture packing internal tool developed for silly_survivors.
 ## Output Header
 
 The output header contains things in a namespace, these are the symbols
-available to you with all options set to default.
+available to you with all options set to default and you only provide input
+images _and_ extra files.
 
 - Namespace: `silly_packer`
   - Structures
-    1. struct: `atlas_info`
-    2. struct: `sprite_info`
-    3. struct: `uv_coords`
+    1. struct `atlas_info` : unsigned int `width`, `height`, `components_per_pixel`
+    2. struct `sprite_info`: unsigned int `x`, `y`, `width`, `height`
+    3. struct `uv_coords`  : float `u0`, `v0`, `u1`, `v1`
   - Enumeration
     1. `sprite_indices` (names you can index into the `sprites` array with)
   - Variables (inline, constexpr)
     1. atlas_info: `atlas_info` variable
-    1. std::array const char*  : array `sprite_filenames`
-    2. std::array sprite_info  : array `sprites`
-    3. std::array std::uint8_t : array `atlas`
+    2. std::array sprite_info  : `sprites`
+    3. std::array std::uint8_t : `atlas`
+    4. std::array std::uint8_t : `filename_ext` like symbols of extra files
   - Functions (inline, constexpr)
-    1. `int get_index (const char*)`
-    2. `uv_coords normalized(const sprite_info)`
+    1. `uv_coords normalized(const sprite_info)`
 
-With raylib utilities option enabled silly_packer also generates
+**With debug option enabled, you are also provided:**
+
+- Namespace: `silly_packer`
+  - Structures 
+    1. struct `extra_symbol_info` : void* `ptr`, std::size_t `size` members
+  - Variables (inline constexpr)
+    1. std::array const char* : array `sprite_filenames`
+    1. std::array const char* : array `extra_filenames`
+  - Functions (inline, constexpr)
+    1. `int get_sprite_index (const char*)`
+    2. `int get_extra_symbol_index(const char*)`
+
+**With raylib utilities option enabled silly_packer also generates:**
 
 - Namespace: `silly_packer`
   - Functions (inline)
@@ -71,25 +83,19 @@ using `./silly_packer -h`
 
 ### Options available
 
-```sh
+```csv
 Usage: silly_packer  [options...]
 
 Options:
-      -i,--images : A comma separated list of image files to be packed [required]
-      -e,--extras : A comma separated list of extra files that can be embedded 
-                    [default: empty string]
-         -o,--out : File name of the generated header [default: silly_atlas.h]
-   -n,--namespace : Namespace string under which the symbols will be placed
-                    [default: silly_packer]
-   -a,--algorithm : Use one of these algorithms to pack: maxrects, guillotine
-                    [default: maxrects]
--g,--gpu_optimize : Extend input images to be squares with 2^n dimensions
-                    (Generated atlas dimensions are always 2^n) [default: false]
-      -s,--stdlib : Use the stdlib defined fixed N-bit types [default: true]
+      -i,--images : A comma separated list of image files to be packed [default: ]
+      -e,--extras : A comma separated list of extra files that can be embedded [default: ]
+         -o,--out : File name of the generated header [default: silly_pack.h]
+   -n,--namespace : Namespace string under which the symbols will be placed [default: silly_packer]
+   -a,--algorithm : Use one of these algorithms to pack: maxrects, guillotine [default: maxrects]
       -r,--raylib : Enable raylib utility functions [default: false]
          -p,--png : Generate an output png image [default: false]
-  -d,--duplicates : Allow duplicate file inputs to be part of the atlas
-                    [default: false]
+  -d,--duplicates : Allow duplicate file inputs to be part of the atlas [default: false]
+          --debug : Export extra symbols that can be used for debugging [default: false]
      -?,-h,--help : print help [implicit: "true", default: false]
 ```
 

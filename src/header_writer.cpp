@@ -5,22 +5,19 @@
 
 header_writer::header_writer(const std::filesystem::path& path,
                              const std::string& guard,
-                             const std::string& spacename, bool use_stdint,
-                             bool use_raylib)
-    : _fstream(path), _header_path(path), _using_stdint(use_stdint),
-      _using_raylib(use_raylib) {
+                             const std::string& spacename, bool use_raylib)
+    : _fstream(path), _header_path(path), _using_raylib(use_raylib),
+      _has_namespace(false) {
   if (!_fstream.is_open()) {
     throw std::runtime_error("Could not open file");
   }
 
   write(std::format("#ifndef {0}\n#define {0}\n", guard));
-  write("#include <array>\n");
-  if (_using_stdint) {
-    write("#include <cstdint>\n");
-    _byte_type = "std::uint8_t";
-  } else {
-    _byte_type = "unsigned char";
-  }
+  write("#include<array>\n");
+  write("#include <cstdint>\n");
+  write("#include <cstddef>\n");
+  _byte_type = "std::uint8_t";
+
   if (_using_raylib)
     write("#include <raylib.h>\n");
 
@@ -36,7 +33,7 @@ bool header_writer::is_open() const { return _fstream.is_open(); }
 
 bool header_writer::using_raylib() const { return _using_raylib; }
 
-bool header_writer::using_stdint() const { return _using_stdint; }
+bool header_writer::using_namespace() const { return _has_namespace; }
 
 const std::string& header_writer::byte_type() const { return _byte_type; }
 
