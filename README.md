@@ -4,7 +4,7 @@ Silly Packer is a texture packing internal tool developed for silly_survivors.
 
 ## Output Header
 
-The output header contains things in a namespace, these are the symbols
+The output header contains the following in a namespace, these are the symbols
 available to you with all options set to default and you only provide input
 images _and_ extra files.
 
@@ -49,6 +49,7 @@ header for more information as to what is inside and how it all works.
 
 > Consider running the generated header through `clang-format`
 
+> If you do not want a namespace simply provide an `""` (empty string) to `-n`
 
 ## Dependencies
 
