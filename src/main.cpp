@@ -299,12 +299,12 @@ void generate_variables(header_writer& header,
   header.write(sprite_filled_string);
 }
 
-void generate_extra_filename_array(header_writer& header,
-                                   const std::vector<std::string>& extra) {
+void generate_extra_filename_array(
+    header_writer& header, const std::vector<std::filesystem::path> extra) {
   std::string comma_separated_filename_literal_string{};
-  for (const std::string& filename : extra) {
-    comma_separated_filename_literal_string.append(std::format(
-        "\"{}\",", std::filesystem::path(filename).filename().string()));
+  for (const std::filesystem::path filename : extra) {
+    comma_separated_filename_literal_string.append(
+        std::format("\"{}\",", filename.filename().string()));
   }
 
   std::string extras_filename_string{
@@ -315,8 +315,8 @@ void generate_extra_filename_array(header_writer& header,
   header.write(extras_filename_string);
 }
 
-void generate_extra_utility_functions(
-    header_writer& header, const std::vector<std::string>& filenames) {
+void generate_extra_utility_functions(header_writer& header,
+                                      const std::size_t filenames_count) {
   // clang-format off
   /* Format: first: filename string literal count */
   const std::string index_by_str_function_string{std::format(
@@ -333,7 +333,7 @@ void generate_extra_utility_functions(
           "if(static_cast<unsigned char>(*string)-static_cast<unsigned char>(*tmp)==0)return i;"
         "}}"
         "return -1;"
-      "}}", filenames.size())};
+      "}}", filenames_count)};
       header.write(index_by_str_function_string);
   // clang-format on
 }
@@ -362,10 +362,11 @@ void generate_extra_symbol_pointer_array(header_writer& header,
   header.write(extras_filename_string);
 }
 
-void generate_extra_lookup_info(header_writer& header,
-                                std::vector<std::string>& filenames) {
-  generate_extra_filename_array(header, filenames);
-  generate_extra_utility_functions(header, filenames);
+void generate_extra_lookup_info(
+    header_writer& header, std::vector<std::string>& filenames,
+    std::vector<std::filesystem::path> actual_filenames) {
+  generate_extra_filename_array(header, actual_filenames);
+  generate_extra_utility_functions(header, filenames.size());
   generate_extra_symbol_pointer_array(header, filenames);
 }
 
@@ -415,7 +416,7 @@ void generate_extra_files_arrays(header_writer& header,
   }
 
   if (debug)
-    generate_extra_lookup_info(header, sanitized_filenames);
+    generate_extra_lookup_info(header, sanitized_filenames, packed_files);
 }
 
 void generate_atlas_header(header_writer& header, const packer_args& args,
