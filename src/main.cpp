@@ -96,8 +96,8 @@ void load_image(const char* name, bool duplicates, const bool using_namespace) {
   image<int> img{};
   img.filename = std::filesystem::path(name).filename();
   img.fullpath = std::filesystem::path(name);
-  img.data =
-      stbi_load(name, &img.width, &img.height, &img.components_per_pixel, 0);
+  img.data = stbi_load(name, &img.width, &img.height, &img.components_per_pixel,
+                       STBIR_RGBA);
   if (img.data == nullptr) {
     std::cerr << std::format("{0}(): failed to load image: {1}: {2}\n",
                              __func__, name, stbi_failure_reason());
@@ -106,6 +106,13 @@ void load_image(const char* name, bool duplicates, const bool using_namespace) {
   }
 
   sanitize_image_filename(img, img.filename.stem().string(), using_namespace);
+  if (img.components_per_pixel != STBIR_RGBA) {
+    std::cout << std::format(
+        "image '{}': was not RGBA originally but has been converted to RGBA\n",
+        img.filename.filename().string());
+    img.components_per_pixel = STBIR_RGBA;
+  }
+
   images.push_back(img);
 }
 
