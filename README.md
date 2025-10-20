@@ -8,44 +8,35 @@ The output header contains the following in a namespace, these are the symbols
 available to you with all options set to default and you only provide input
 images _and_ extra files.
 
-- Namespace: `silly_packer`
-  - Structures
-    1. struct `atlas_info` : unsigned int `width`, `height`, `components_per_pixel`
-    2. struct `sprite_info`: unsigned int `x`, `y`, `width`, `height`
-    3. struct `uv_coords`  : float `u0`, `v0`, `u1`, `v1`
-  - Enumeration
-    1. `sprite_indices` (names you can index into the `sprites` array with)
-  - Variables (inline, constexpr)
-    1. atlas_info: `atlas_info` variable
-    2. std::array sprite_info  : `sprites`
-    3. std::array std::uint8_t : `atlas`
-    4. std::array std::uint8_t : `filename_ext` like symbols of extra files
-  - Functions (inline, constexpr)
-    1. `uv_coords normalized(const sprite_info)`
+| Namespace | Struct | Members     | Notes |
+|-----------|--------|-------------|-------|
+| `silly_packer` | `atlas_info`          | unsigned int `width`, `height`, `components_per_pixel` | |
+|                | `extra_symbol_info`   | void* `ptr`, std::size_t `size` members | Debug option only |
+|                | `sprite_info`         | unsigned int `x`, `y`, `width`, `height` | |
+|                | `uv_coords`           | float`x`, `y`, `width`, `height` | |
 
-**With debug option enabled, you are also provided:**
+| Namespace      | Enumeration (non-class) | Description | Notes |
+|----------------|-------------------------|-------------|-------|
+| `silly_packer` | `sprite_indices`        | Names that can be used index into the `sprites` array | For input `random_sprite.png`, generated as `RANDOM_SPRITE` |
 
-- Namespace: `silly_packer`
-  - Structures 
-    1. struct `extra_symbol_info` : void* `ptr`, std::size_t `size` members
-  - Variables (inline constexpr)
-    1. std::array const char* : array `sprite_filenames`
-    1. std::array const char* : array `extra_filenames`
-  - Functions (inline, constexpr)
-    1. `int get_sprite_index (const char*)`
-    2. `int get_extra_symbol_index(const char*)`
+| Namespace      | Variable             | Type          | Description | Notes |
+|----------------|----------------------|---------------|-------------|-------|
+| `silly_packer` | `atlas`                 | `std::array<std::uint8_t>`       | The full generated atlas array | |
+|                | `atlas_properties`      | `atlas_info`                     | Filled structure with information about the generated atlas | |
+|                | `extra_filenames`       | `std::array<const char*>`        | c-style string names of extra input files | Debug option only |
+|                | `extra_symbol_table`    | `std::array<extra_symbol_info>`  | Raw pointer to std::array and its size stored in an array (intended to be casted) | Debug option only |
+|                | `filename_extension`    | `std::array<std::uint8_t>`       | Multiple of these are generated in the form, as exemeplified in the variable column. This is for extra files that are embedded into the header, e.g `-e ambient.glsl` -> `ambient_glsl` byte array | |
+|                | `sprites`               | `std::array<sprite_info>`        | Array with individual image/sprite data about its presence in the atlas | |
+|                | `sprite_filenames`      | `std::array<const char*>`        | c-style string names of image/sprite input files | Debug option only |
 
-**With raylib utilities option enabled silly_packer also generates:**
+| Namespace      | Function name | Return Type  | Parameters (in-order) | Description | Notes |
+|----------------|---------------|--------------|-----------------------|-------------|-------|
+| `silly_packer` | `get_sprite_index`        | `int`        | `const char*`   | Takes in a filename and returns the index of that name (to-be used with `atlas`) | Debug option only |
+|                | `get_extra_symbol_index ` | `int`        | `const char*`   | Takes in a filename and returns the index of that name (to-be used with extra symbols lookup table) | Debug option only |
+|                | `normalized`              | `uv_coords`  | `const sprite_info`   | Returns a `uv_coords` value from sprite metadata | |
+|                | `raylib_atlas_image`      | `Image`      | None                  | Returns an atlas `Image` usable with raylib | Raylib option only |
+|                | `raylib_atlas_texture`    | `Texture2D`  | None                  | Returns an atlas `Texture2D` usable with raylib | Raylib option only |
 
-- Namespace: `silly_packer`
-  - Functions (inline)
-    1. `Image raylib_atlas_image()`;
-    2. `Texture2D raylib_atlas_texture()`;
-
-If extra files are supplied to be embedded, they are also generated as
-`std::array<byte_type, N> IDENTIFIER` where `IDENTIFIER` is replaced with
-lowercase filename stem of the input file after sanitization. Simply consult the
-header for more information as to what is inside and how it all works.
 
 > Consider running the generated header through `clang-format`
 
