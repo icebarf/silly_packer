@@ -17,7 +17,7 @@ images _and_ extra files.
 
 | Namespace      | Enumeration (non-class) | Description | Notes |
 |----------------|-------------------------|-------------|-------|
-| `silly_packer` | `sprite_indices`        | Names that can be used index into the `sprites` array | For input `random_sprite.png`, generated as `RANDOM_SPRITE` |
+| `silly_packer` | `sprite_indices`        | Names that can be used index into the `sprites` array | For input `random_sprite.png`, generated as `RANDOM_SPRITE`. Also provides `min_index`(always 0) and `max_index` (image inputs - 1 count) values. |
 
 | Namespace      | Variable             | Type          | Description | Notes |
 |----------------|----------------------|---------------|-------------|-------|
