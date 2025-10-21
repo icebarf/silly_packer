@@ -299,6 +299,8 @@ void generate_variables(header_writer& header,
     sprite_enum_string.append(
         std::format("{} = {},", images[i].clean_filename, i));
   }
+  sprite_enum_string.append(
+      std::format("min_index=0,max_index={},", images.size() - 1));
   sprite_enum_string.append("};");
 
   header.write(sprite_enum_string);
