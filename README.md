@@ -11,7 +11,7 @@ images _and_ extra files.
 | Namespace | Struct | Members     | Notes |
 |-----------|--------|-------------|-------|
 | `silly_packer` | `atlas_info`          | unsigned int `width`, `height`, `components_per_pixel` | |
-|                | `extra_symbol_info`   | void* `ptr`, std::size_t `size` members | Debug option only |
+|                | `extra_symbol_info`   | void* `data`, std::size_t `size` | Debug option only |
 |                | `sprite_info`         | unsigned int `x`, `y`, `width`, `height` | |
 |                | `uv_coords`           | float`x`, `y`, `width`, `height` | |
 
@@ -25,7 +25,7 @@ images _and_ extra files.
 |                | `atlas_properties`      | `atlas_info`                     | Filled structure with information about the generated atlas | |
 |                | `extra_filenames`       | `std::array<const char*>`        | c-style string names of extra input files | Debug option only |
 |                | `extra_symbol_table`    | `std::array<extra_symbol_info>`  | Raw pointer to std::array and its size stored in an array (intended to be casted) | Debug option only |
-|                | `filename_extension`    | `std::array<std::uint8_t>`       | Multiple of these are generated in the form, as exemeplified in the variable column. This is for extra files that are embedded into the header, e.g `-e ambient.glsl` -> `ambient_glsl` byte array | |
+|                | `filename_extension`    | `std::array<std::uint8_t>`       | (Extra Input Files) These are generated in the form as exemplified in the variable column, embedded into the header, e.g `-e ambient.glsl` -> `ambient_glsl` byte array | |
 |                | `sprites`               | `std::array<sprite_info>`        | Array with individual image/sprite data about its presence in the atlas | |
 |                | `sprite_filenames`      | `std::array<const char*>`        | c-style string names of image/sprite input files | Debug option only |
 
