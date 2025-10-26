@@ -11,7 +11,7 @@ images _and_ extra files.
 | Namespace | Struct | Members     | Notes |
 |-----------|--------|-------------|-------|
 | `silly_packer` | `atlas_info`          | unsigned int `width`, `height`, `components_per_pixel` | |
-|                | `extra_symbol_info`   | void* `data`, std::size_t `size` | Debug option only |
+|                | `extra_symbol_info`   | const void* `data`, std::size_t `size` | Debug option only |
 |                | `sprite_info`         | unsigned int `x`, `y`, `width`, `height` | |
 |                | `uv_coords`           | float`x`, `y`, `width`, `height` | |
 

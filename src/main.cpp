@@ -351,14 +351,14 @@ void generate_extra_symbol_pointer_array(header_writer& header,
                                          std::vector<std::string>& filenames) {
 
   const std::string extra_symbol_info_structure_string{
-      "struct extra_symbol_info{void* data; std::size_t size;};"};
+      "struct extra_symbol_info{const void* data; std::size_t size;};"};
   header.write(extra_symbol_info_structure_string);
 
   std::string comma_separated_filename_literal_string{};
   for (const std::string& file : filenames) {
     comma_separated_filename_literal_string.append(
-        std::format("extra_symbol_info{{static_cast<void*>(const_cast<std::"
-                    "uint8_t*>({0}.data())), {0}.size()}},",
+        std::format("extra_symbol_info{{static_cast<const void*>({0}.data()),"
+                    "{0}.size()}},",
                     file));
   }
 
