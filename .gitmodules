@@ -1,0 +1,3 @@
+[submodule "cmake/stb/stb"]
+	path = cmake/stb/stb
+	url = https://github.com/nothings/stb

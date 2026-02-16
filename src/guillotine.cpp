@@ -1,4 +1,18 @@
-/* Copyright (c) silly_survivors authors, 2025
+/* Copyright (C) Amritpal Singh 2025
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
  * This file is an implementation of Guillotine strategy for
  * Rectangle Packing which is one of the ways 2D Bin Packing problem
  * can be solved. The code in this document is inspired from the
@@ -11,7 +25,6 @@
  * https://github.com/juj/RectangleBinPack/blob/master/GuillotineBinPack.cpp
  * and some youtube videos on the topic as well as stackoverflow threads
  */
-
 #include "packer.h"
 #include "rectangle_checks.h"
 #include <algorithm>
@@ -21,10 +34,10 @@
 using std::uint32_t;
 using rectangle_vector = std::vector<rectangle>;
 
-static rectangle_vector handle_overlaps_and_splits(const rectangle_vector& free,
-                                                   const rectangle& rect) {
+static rectangle_vector handle_overlaps_and_splits(const rectangle_vector &free,
+                                                   const rectangle &rect) {
   rectangle_vector new_free = {};
-  for (const rectangle& free_rect : free) {
+  for (const rectangle &free_rect : free) {
     // we're not overlapping
     if (!is_overlapping(free_rect, rect)) {
       new_free.push_back(free_rect);
@@ -93,7 +106,7 @@ static rectangle_vector cleanup_splits(rectangle_vector free) {
 
   // overlap cleanup
   rectangle_vector result;
-  for (rectangle& rect : new_free) {
+  for (rectangle &rect : new_free) {
     result = handle_overlaps_and_splits(result, rect);
     result.push_back(rect);
   }
@@ -107,7 +120,7 @@ guillotine_pack_rectangles(int atlas_width, int atlas_height,
   rectangle_vector free_recs = {{0, 0, atlas_width, atlas_height}};
   rectangle_vector placed;
 
-  for (image<int>& to_fit : rectangles) {
+  for (image<int> &to_fit : rectangles) {
     rectangle selection = {};
     int selection_index = invalid;
 
@@ -146,10 +159,10 @@ guillotine_pack_rectangles(int atlas_width, int atlas_height,
   return placed;
 }
 
-atlas_properties guillotine(std::vector<image<int>>& images) {
+atlas_properties guillotine(std::vector<image<int>> &images) {
   // this sorts the images (rectangles) vector by whatever side is larger
   std::sort(images.begin(), images.end(),
-            [](const image<int>& img1, const image<int>& img2) {
+            [](const image<int> &img1, const image<int> &img2) {
               return std::max(img1.width, img1.height) >
                      std::max(img2.width, img2.height);
             });

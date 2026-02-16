@@ -1,11 +1,26 @@
+/* Copyright (C) szejmon, Amritpal Singh 2025
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "header_writer.h"
 #include <format>
 #include <sstream>
 #include <stdexcept>
 
-header_writer::header_writer(const std::filesystem::path& path,
-                             const std::string& guard,
-                             const std::string& spacename, bool use_raylib)
+header_writer::header_writer(const std::filesystem::path &path,
+                             const std::string &guard,
+                             const std::string &spacename, bool use_raylib)
     : _fstream(path), _header_path(path), _using_raylib(use_raylib),
       _has_namespace(false) {
   if (!_fstream.is_open()) {
@@ -35,17 +50,17 @@ bool header_writer::using_raylib() const { return _using_raylib; }
 
 bool header_writer::using_namespace() const { return _has_namespace; }
 
-const std::string& header_writer::byte_type() const { return _byte_type; }
+const std::string &header_writer::byte_type() const { return _byte_type; }
 
 std::filesystem::path header_writer::get_path() const { return _header_path; }
 
-void header_writer::write(const std::string& data) {
+void header_writer::write(const std::string &data) {
   _fstream.write(data.c_str(), data.size());
 }
 
-void header_writer::write_variable(const std::string& type,
-                                   const std::string& name,
-                                   const std::string& value, bool constant) {
+void header_writer::write_variable(const std::string &type,
+                                   const std::string &name,
+                                   const std::string &value, bool constant) {
   std::string constant_string = "";
   if (constant) {
     constant_string = "constexpr ";
@@ -54,8 +69,8 @@ void header_writer::write_variable(const std::string& type,
   write(std::format("{}{} {}={};", constant_string, type_string, name, value));
 }
 
-void header_writer::write_byte_array(const std::string& name,
-                                     const std::uint8_t* data, std::size_t size,
+void header_writer::write_byte_array(const std::string &name,
+                                     const std::uint8_t *data, std::size_t size,
                                      bool constant) {
   std::stringstream bytes_stream;
   for (std::size_t i = 0; i < size; i++) {

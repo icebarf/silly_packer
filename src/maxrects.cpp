@@ -1,3 +1,18 @@
+/* Copyright (C) Amritpal Singh 2025
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "packer.h"
 #include "rectangle_checks.h"
 #include <algorithm>
@@ -20,19 +35,19 @@ static rectangle img2rect(image<int> image) {
   return {0, 0, image.width, image.height};
 }
 
-static uint32_t area(const rectangle& rect) { return rect.width * rect.height; }
+static uint32_t area(const rectangle &rect) { return rect.width * rect.height; }
 
-static uint32_t select_best(std::vector<baf_score>& scores,
-                            const rectangle_vector& selections) {
+static uint32_t select_best(std::vector<baf_score> &scores,
+                            const rectangle_vector &selections) {
   // sort by area
   std::sort(scores.begin(), scores.end(),
-            [](const baf_score& s1, const baf_score& s2) {
+            [](const baf_score &s1, const baf_score &s2) {
               return s1.area_fit < s2.area_fit;
             });
 
   std::vector<baf_score> tie;
   uint32_t smallest = scores[0].area_fit;
-  for (const baf_score& s : scores) {
+  for (const baf_score &s : scores) {
     if (s.area_fit == smallest)
       tie.push_back(s);
     else
@@ -43,7 +58,7 @@ static uint32_t select_best(std::vector<baf_score>& scores,
     return scores[0].index;
 
   std::sort(tie.begin(), tie.end(),
-            [](const baf_score& s1, const baf_score& s2) {
+            [](const baf_score &s1, const baf_score &s2) {
               if (s1.short_side_fit != s2.short_side_fit)
                 return s1.short_side_fit < s2.short_side_fit;
               return s1.long_side_fit < s2.long_side_fit;
@@ -51,8 +66,8 @@ static uint32_t select_best(std::vector<baf_score>& scores,
   return tie[0].index;
 }
 
-static rectangle calculate_best_area_fit(const rectangle& to_fit,
-                                         const rectangle_vector& selections) {
+static rectangle calculate_best_area_fit(const rectangle &to_fit,
+                                         const rectangle_vector &selections) {
   std::vector<baf_score> scores(selections.size());
   scores.resize(selections.size());
   for (int i = 0; i < selections.size(); i++) {
@@ -67,8 +82,8 @@ static rectangle calculate_best_area_fit(const rectangle& to_fit,
   return selections[index];
 }
 
-static rectangle find_selection(const rectangle& to_fit,
-                                const rectangle_vector& free) {
+static rectangle find_selection(const rectangle &to_fit,
+                                const rectangle_vector &free) {
   rectangle_vector selections;
   for (int i = 0; i < free.size(); i++) {
     if (canfit(to_fit, free[i])) {
@@ -82,7 +97,7 @@ static rectangle find_selection(const rectangle& to_fit,
   return calculate_best_area_fit(to_fit, selections);
 }
 
-static void handle_overlaps_and_splits(rectangle_vector& free_recs,
+static void handle_overlaps_and_splits(rectangle_vector &free_recs,
                                        const rectangle placed) {
   rectangle_vector new_free;
 
@@ -91,7 +106,7 @@ static void handle_overlaps_and_splits(rectangle_vector& free_recs,
       new_free.push_back(r);
   };
 
-  for (const rectangle& free : free_recs) {
+  for (const rectangle &free : free_recs) {
     if (!is_overlapping(free, placed)) {
       new_free.push_back(free);
       continue;
@@ -116,7 +131,7 @@ static void handle_overlaps_and_splits(rectangle_vector& free_recs,
   free_recs.swap(new_free);
 }
 
-static void prune_free_overlapping(rectangle_vector& free_rects) {
+static void prune_free_overlapping(rectangle_vector &free_rects) {
   std::vector<bool> to_prune(free_rects.size(), false);
   for (int i = 0; i < free_rects.size(); i++) {
     for (int j = 0; j < free_rects.size(); j++) {
@@ -141,7 +156,7 @@ maxrect_baf_pack_rectangles(int atlas_width, int atlas_height,
   rectangle_vector free_recs = {{0, 0, atlas_width, atlas_height}};
   rectangle_vector placed;
 
-  for (image<int>& to_fit : rectangles) {
+  for (image<int> &to_fit : rectangles) {
 
     rectangle selection = find_selection(img2rect(to_fit), free_recs);
     if (is_invalid_rectangle(selection))
@@ -157,10 +172,10 @@ maxrect_baf_pack_rectangles(int atlas_width, int atlas_height,
   return placed;
 }
 
-atlas_properties maxrects(std::vector<image<int>>& images) {
+atlas_properties maxrects(std::vector<image<int>> &images) {
   /* we sort by area, in our guillotine impl it's max side up */
   std::sort(images.begin(), images.end(),
-            [](const image<int>& img1, const image<int>& img2) {
+            [](const image<int> &img1, const image<int> &img2) {
               return (img1.width * img1.height) > (img2.width * img2.height);
             });
 

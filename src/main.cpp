@@ -1,3 +1,18 @@
+/* Copyright (C) Amritpal Singh 2025
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "header_writer.h"
 #include "packer.h"
 
@@ -13,35 +28,35 @@
 #include <vector>
 
 struct packer_args : public argparse::Args {
-  std::vector<std::string>& image_files =
+  std::vector<std::string> &image_files =
       kwarg("i,images", "A comma separated list of image files to be packed")
           .multi_argument()
           .set_default("");
-  std::vector<std::string>& extra_files =
+  std::vector<std::string> &extra_files =
       kwarg("e,extras",
             "A comma separated list of extra files that can be embedded")
           .multi_argument()
           .set_default("");
-  std::string& output_header =
+  std::string &output_header =
       kwarg("o,out", "File name of the generated header")
           .set_default("silly_pack.h");
-  std::string& spacename =
+  std::string &spacename =
       kwarg("n,namespace",
             "Namespace string under which the symbols will be placed")
           .set_default("silly_packer");
-  std::string& algorithm =
+  std::string &algorithm =
       kwarg("a,algorithm",
             "Use one of these algorithms to pack: maxrects, guillotine")
           .set_default("maxrects");
-  bool& raylib_utils =
+  bool &raylib_utils =
       kwarg("r,raylib", "Enable raylib utility functions").set_default(false);
-  bool& generate_png =
+  bool &generate_png =
       kwarg("p,png", "Generate an output png image").set_default(false);
-  bool& duplicates =
+  bool &duplicates =
       kwarg("d,duplicates",
             "Allow duplicate file inputs to be part of the atlas")
           .set_default(false);
-  bool& debug =
+  bool &debug =
       kwarg("debug", "Export extra symbols that can be used for debugging")
           .set_default(false);
 };
@@ -50,7 +65,7 @@ inline std::vector<image<int>> images;
 inline image<unsigned int> atlas;
 inline std::vector<std::uint8_t> atlas_data;
 
-void get_sanitized_name(std::string& output, const std::string_view& filename,
+void get_sanitized_name(std::string &output, const std::string_view &filename,
                         const bool using_namespace) {
   std::string file{filename};
   std::transform(file.begin(), file.end(), file.begin(),
@@ -69,7 +84,7 @@ void get_sanitized_name(std::string& output, const std::string_view& filename,
   output.swap(file);
 }
 
-void sanitize_image_filename(image<int>& img, const std::string_view& filename,
+void sanitize_image_filename(image<int> &img, const std::string_view &filename,
                              const bool using_namespace) {
   img.clean_filename.append([&filename, using_namespace]() {
     std::string name;
@@ -78,8 +93,8 @@ void sanitize_image_filename(image<int>& img, const std::string_view& filename,
   }());
 }
 
-void check_image_duplicates(const std::string_view& name, bool duplicates) {
-  for (const image<int>& img : images) {
+void check_image_duplicates(const std::string_view &name, bool duplicates) {
+  for (const image<int> &img : images) {
     if (img.filename.stem() == std::filesystem::path(name).stem()) {
       std::cerr << std::format("File '{}' alread loaded. Exiting\n", name);
       std::exit(1);
@@ -87,7 +102,7 @@ void check_image_duplicates(const std::string_view& name, bool duplicates) {
   }
 }
 
-void load_image(const char* name, bool duplicates, const bool using_namespace) {
+void load_image(const char *name, bool duplicates, const bool using_namespace) {
   // check for repeats and skip
   if (duplicates == false) {
     check_image_duplicates(name, duplicates);
@@ -117,13 +132,13 @@ void load_image(const char* name, bool duplicates, const bool using_namespace) {
 }
 
 void cleanup_stb_images() {
-  for (image<int>& img : images)
+  for (image<int> &img : images)
     stbi_image_free(img.data);
 }
 
 atlas_properties
-pack_images_to_rectangles(std::vector<std::string>& image_files,
-                          std::string& algorithm, bool duplicates,
+pack_images_to_rectangles(std::vector<std::string> &image_files,
+                          std::string &algorithm, bool duplicates,
                           const bool using_namespace) {
   for (int i = 0; i < image_files.size(); i++) {
     load_image(image_files[i].c_str(), duplicates, using_namespace);
@@ -152,7 +167,7 @@ pack_images_to_rectangles(std::vector<std::string>& image_files,
 }
 
 std::vector<std::uint8_t>
-convert_packed_to_atlas(const atlas_properties& properties) {
+convert_packed_to_atlas(const atlas_properties &properties) {
   std::vector<std::uint8_t> atlas_raw_vector;
   atlas_raw_vector.resize(properties.width * properties.height *
                           images[0].components_per_pixel);
@@ -173,7 +188,7 @@ convert_packed_to_atlas(const atlas_properties& properties) {
       exit(1);
     }
 
-    std::uint8_t* index_region =
+    std::uint8_t *index_region =
         atlas_raw_vector.data() +
         (properties.rectangles[i].y * properties.width +
          properties.rectangles[i].x) *
@@ -192,7 +207,7 @@ convert_packed_to_atlas(const atlas_properties& properties) {
   return atlas_raw_vector;
 }
 
-void generate_structures(header_writer& header) {
+void generate_structures(header_writer &header) {
   const std::string atlas_structure_string{std::format(
       "inline constexpr struct atlas_info{{unsigned int width,height,"
       "components_per_pixel;}}"
@@ -209,7 +224,7 @@ void generate_structures(header_writer& header) {
   header.write(uv_structure_string);
 }
 
-void generate_sprite_filename_array(header_writer& header) {
+void generate_sprite_filename_array(header_writer &header) {
   std::string comma_separated_filename_literal_string{};
   for (int i = 0; i < images.size(); i++) {
     comma_separated_filename_literal_string.append(
@@ -224,7 +239,7 @@ void generate_sprite_filename_array(header_writer& header) {
   header.write(sprite_indiced_filename_string);
 }
 
-void generate_raylib_function_defs(header_writer& header) {
+void generate_raylib_function_defs(header_writer &header) {
   // clang-format off
   const std::string raylib_atlas_image_function_string {std::format(
     "inline Image raylib_atlas_image(){{"
@@ -245,7 +260,7 @@ void generate_raylib_function_defs(header_writer& header) {
   header.write(raylib_atlas_texture_function_string);
 }
 
-void generate_utility_functions(header_writer& header, bool debug) {
+void generate_utility_functions(header_writer &header, bool debug) {
 
   /* unsure whether we need to (x,y)+0.5 or not to get something called
    * the 'texel', need input from K ig? also probably see the repeated
@@ -282,12 +297,12 @@ void generate_utility_functions(header_writer& header, bool debug) {
   header.write(sprite_coord_normalize_function_string);
 }
 
-void generate_variables(header_writer& header,
-                        const atlas_properties& packed_data) {
+void generate_variables(header_writer &header,
+                        const atlas_properties &packed_data) {
   const std::string sprite_structure_array_string{std::format(
       "inline constexpr std::array<sprite_info,{}>sprites={{", images.size())};
   std::string sprite_filled_string{""};
-  for (const rectangle& rect : packed_data.rectangles) {
+  for (const rectangle &rect : packed_data.rectangles) {
     sprite_filled_string.append(std::format("sprite_info{{{},{},{},{}}},",
                                             rect.x, rect.y, rect.width,
                                             rect.height));
@@ -309,7 +324,7 @@ void generate_variables(header_writer& header,
 }
 
 void generate_extra_filename_array(
-    header_writer& header, const std::vector<std::filesystem::path> extra) {
+    header_writer &header, const std::vector<std::filesystem::path> extra) {
   std::string comma_separated_filename_literal_string{};
   for (const std::filesystem::path filename : extra) {
     comma_separated_filename_literal_string.append(
@@ -324,7 +339,7 @@ void generate_extra_filename_array(
   header.write(extras_filename_string);
 }
 
-void generate_extra_utility_functions(header_writer& header,
+void generate_extra_utility_functions(header_writer &header,
                                       const std::size_t filenames_count) {
   // clang-format off
   /* Format: first: filename string literal count */
@@ -347,15 +362,15 @@ void generate_extra_utility_functions(header_writer& header,
   // clang-format on
 }
 
-void generate_extra_symbol_pointer_array(header_writer& header,
-                                         std::vector<std::string>& filenames) {
+void generate_extra_symbol_pointer_array(header_writer &header,
+                                         std::vector<std::string> &filenames) {
 
   const std::string extra_symbol_info_structure_string{
       "struct extra_symbol_info{const void* data; std::size_t size;};"};
   header.write(extra_symbol_info_structure_string);
 
   std::string comma_separated_filename_literal_string{};
-  for (const std::string& file : filenames) {
+  for (const std::string &file : filenames) {
     comma_separated_filename_literal_string.append(
         std::format("extra_symbol_info{{static_cast<const void*>({0}.data()),"
                     "{0}.size()}},",
@@ -371,24 +386,24 @@ void generate_extra_symbol_pointer_array(header_writer& header,
 }
 
 void generate_extra_lookup_info(
-    header_writer& header, std::vector<std::string>& filenames,
+    header_writer &header, std::vector<std::string> &filenames,
     std::vector<std::filesystem::path> actual_filenames) {
   generate_extra_filename_array(header, actual_filenames);
   generate_extra_utility_functions(header, filenames.size());
   generate_extra_symbol_pointer_array(header, filenames);
 }
 
-void generate_extra_files_arrays(header_writer& header,
-                                 std::vector<std::string>& extras, bool debug) {
+void generate_extra_files_arrays(header_writer &header,
+                                 std::vector<std::string> &extras, bool debug) {
   std::vector<std::uint8_t> data;
   std::vector<std::filesystem::path> packed_files;
   std::vector<std::string> sanitized_filenames;
 
   /* for every filename in extra files */
-  for (std::string& filename : extras) {
+  for (std::string &filename : extras) {
     /* duplication check */
     if (not packed_files.empty()) {
-      for (std::filesystem::path& file : packed_files) {
+      for (std::filesystem::path &file : packed_files) {
         if (file == std::filesystem::path(filename).filename()) {
           std::cerr << std::format("File '{}' already embedded\nExiting\n",
                                    filename);
@@ -410,7 +425,7 @@ void generate_extra_files_arrays(header_writer& header,
     input.clear();
 
     data.resize(size);
-    input.read(reinterpret_cast<char*>(data.data()), size);
+    input.read(reinterpret_cast<char *>(data.data()), size);
 
     std::string sanitized;
     get_sanitized_name(sanitized,
@@ -427,8 +442,8 @@ void generate_extra_files_arrays(header_writer& header,
     generate_extra_lookup_info(header, sanitized_filenames, packed_files);
 }
 
-void generate_atlas_header(header_writer& header, const packer_args& args,
-                           const atlas_properties& packed_data) {
+void generate_atlas_header(header_writer &header, const packer_args &args,
+                           const atlas_properties &packed_data) {
   if (not args.image_files.empty()) {
     generate_structures(header);
     if (args.debug) {
@@ -454,7 +469,7 @@ void generate_atlas_header(header_writer& header, const packer_args& args,
   std::cout << "Output Header: " << args.output_header << '\n';
 }
 
-atlas_properties operate_on_args(packer_args& args) {
+atlas_properties operate_on_args(packer_args &args) {
   std::string filename = args.output_header;
   if (filename.empty()) {
     std::cerr << "Empty output header filename not allowed\n";
@@ -494,7 +509,7 @@ atlas_properties operate_on_args(packer_args& args) {
   return {.filename = filename};
 }
 
-std::string get_guard_string(const std::string& filename,
+std::string get_guard_string(const std::string &filename,
                              bool using_namespace) {
   std::string sanitized;
   get_sanitized_name(sanitized, filename, using_namespace);
@@ -503,7 +518,7 @@ std::string get_guard_string(const std::string& filename,
   return std::format("SILLY_PACKER_GENERATED_{}_H", sanitized);
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   if (argc == 1) {
     std::cerr << std::format("{}: must take in some image parameters\n",
                              argv[0]);

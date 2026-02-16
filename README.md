@@ -118,3 +118,7 @@ Anything beyond that, `maxrects` is more suitable for when we have large number 
 | ![](./images/stupid_atlas_guillotine_300.png) | ![](./images/stupid_atlas_maxrects_300.png) |
 | 1200       | 1200     |
 | ![](./images/stupid_atlas_guillotine_1200.png) | ![](./images/stupid_atlas_maxrects_1200.png) |
+
+## Copyright/Credits
+- [icebarf](https://icebarf.net/) - Rectangle packing, main logic
+- [szejmon](https://codeberg.org/szejmon) - Header Writer module, behavior descriptions
