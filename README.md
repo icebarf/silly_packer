@@ -23,6 +23,7 @@ The library dependencies are handled via cmake, and git.
 ```sh
 $ git clone https://github.com/icebarf/silly_packer
 $ cd silly_packer/
+$ git submodule update --init # get the dependencies
 $ cmake -S . -B build
 $ cmake --build build
 # Now available as a statically linked binary in `build/`
