@@ -130,4 +130,4 @@ images _and_ extra files.
 
 ## Copyright/Credits
 - [icebarf](https://icebarf.net/) - Rectangle packing, main logic, primary author
-- [szejmon](https://codeberg.org/szejmon) - Header Writer module, behavior descriptions for certain options
+- [szejmon](https://codeberg.org/szejmon) - Header Writer module, build files, dep integration
