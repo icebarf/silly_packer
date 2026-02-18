@@ -1,6 +1,8 @@
 # silly_packer
 
-Silly Packer is a texture packing internal tool developed for silly_survivors.
+Silly Packer is a texture packer/atlas generator, developed for an unreleased game.
+
+Silly Packer primarily generates a header with the atlas embedded and generates helper functions. It also supports integration with raylib, generating atlas as a PNG, embedding any binary or file in the header, and multiple packing algorithms.
 
 ## Dependencies
 
@@ -32,14 +34,11 @@ $ ./build/silly_packer --help
 
 ## Usage
 
-Assuming your input image dimensions are in power of two, simply doing
-
 ```sh
 silly_packer -i image1,image2...
 ```
 
-should work fine. You can fine tune the options by seeing all the available flags
-using `silly_packer -h`
+should work fine as-is. See available flags (`silly_packer -h`) to configure behavior and output
 
 > Silly packer skips over duplicates by default
 
@@ -130,5 +129,5 @@ images _and_ extra files.
 > If you do not want a namespace simply provide an `""` (empty string) to `-n`
 
 ## Copyright/Credits
-- [icebarf](https://icebarf.net/) - Rectangle packing, main logic
-- [szejmon](https://codeberg.org/szejmon) - Header Writer module, behavior descriptions
+- [icebarf](https://icebarf.net/) - Rectangle packing, main logic, primary author
+- [szejmon](https://codeberg.org/szejmon) - Header Writer module, behavior descriptions for certain options
